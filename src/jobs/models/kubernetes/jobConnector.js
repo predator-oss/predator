@@ -129,7 +129,10 @@ async function getJobControllerUid(jobPlatformName) {
 
     const job = await requestSender.send(options);
 
-    const controllerUid = job.spec.selector.matchLabels['controller-uid'];
+    // Kubernetes 1.27 moved the job selector label to the prefixed form and
+    // deprecated the bare one; read whichever the cluster set.
+    const matchLabels = job.spec.selector.matchLabels;
+    const controllerUid = matchLabels['batch.kubernetes.io/controller-uid'] || matchLabels['controller-uid'];
     return controllerUid;
 }
 
@@ -153,19 +156,23 @@ async function getLogsByPodsNames(podsNames) {
 }
 
 async function getPodsByLabel(jobControllerUid) {
-    const url = util.format('%s/api/v1/namespaces/%s/pods?labelSelector=controller-uid=%s', kubernetesUrl, kubernetesNamespace, jobControllerUid);
-    const options = {
-        url,
-        method: 'GET',
-        headers
-    };
+    // Prefer the label Kubernetes sets since 1.27; fall back to the deprecated
+    // bare label so pre-1.27 clusters keep working.
+    const selectors = ['batch.kubernetes.io/controller-uid', 'controller-uid'];
+    for (const label of selectors) {
+        const url = util.format('%s/api/v1/namespaces/%s/pods?labelSelector=%s=%s', kubernetesUrl, kubernetesNamespace, encodeURIComponent(label), jobControllerUid);
+        const options = {
+            url,
+            method: 'GET',
+            headers
+        };
 
-    const pods = await requestSender.send(options);
-
-    const podsNames = pods.items.map((pod) => {
-        return pod.metadata.name;
-    });
-    return podsNames;
+        const pods = await requestSender.send(options);
+        if (pods.items.length > 0) {
+            return pods.items.map((pod) => pod.metadata.name);
+        }
+    }
+    return [];
 }
 
 async function getPodByName(podName) {

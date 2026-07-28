@@ -250,7 +250,7 @@ describe('Create job specific kubernetes tests', async function () {
                             .reply(200, {
                                 items: [{ metadata: { uid: 'x' } }]
                             });
-                        nock(kubernetesConfig.kubernetesUrl).get(`/api/v1/namespaces/${kubernetesConfig.kubernetesNamespace}/pods?labelSelector=controller-uid=x`)
+                        nock(kubernetesConfig.kubernetesUrl).get(`/api/v1/namespaces/${kubernetesConfig.kubernetesNamespace}/pods?labelSelector=batch.kubernetes.io%2Fcontroller-uid=x`)
                             .reply(200, {
                                 items: [{ metadata: { name: 'podA' } }]
                             });
@@ -579,10 +579,10 @@ describe('Create job specific kubernetes tests', async function () {
                     it('Get logs', async () => {
                         nock(kubernetesConfig.kubernetesUrl).get(`/apis/batch/v1/namespaces/${kubernetesConfig.kubernetesNamespace}/jobs/predator.${createJobResponse.body.report_id}`)
                             .reply(200, {
-                                spec: { selector: { matchLabels: { 'controller-uid': 'uid' } } }
+                                spec: { selector: { matchLabels: { 'batch.kubernetes.io/controller-uid': 'uid' } } }
                             });
 
-                        nock(kubernetesConfig.kubernetesUrl).get(`/api/v1/namespaces/${kubernetesConfig.kubernetesNamespace}/pods?labelSelector=controller-uid=uid`)
+                        nock(kubernetesConfig.kubernetesUrl).get(`/api/v1/namespaces/${kubernetesConfig.kubernetesNamespace}/pods?labelSelector=batch.kubernetes.io%2Fcontroller-uid=uid`)
                             .reply(200, {
                                 items: [{ metadata: { name: 'podA' } }, { metadata: { name: 'podB' } }]
                             });
@@ -741,12 +741,12 @@ describe('Create job specific kubernetes tests', async function () {
                                 items: [{ metadata: { uid: 'x' } }, { metadata: { uid: 'y' } }]
                             });
 
-                        nock(kubernetesConfig.kubernetesUrl).get(`/api/v1/namespaces/${kubernetesConfig.kubernetesNamespace}/pods?labelSelector=controller-uid=x`)
+                        nock(kubernetesConfig.kubernetesUrl).get(`/api/v1/namespaces/${kubernetesConfig.kubernetesNamespace}/pods?labelSelector=batch.kubernetes.io%2Fcontroller-uid=x`)
                             .reply(200, {
                                 items: [{ metadata: { name: 'podA' } }]
                             });
 
-                        nock(kubernetesConfig.kubernetesUrl).get(`/api/v1/namespaces/${kubernetesConfig.kubernetesNamespace}/pods?labelSelector=controller-uid=y`)
+                        nock(kubernetesConfig.kubernetesUrl).get(`/api/v1/namespaces/${kubernetesConfig.kubernetesNamespace}/pods?labelSelector=batch.kubernetes.io%2Fcontroller-uid=y`)
                             .reply(200, {
                                 items: [{ metadata: { name: 'podB' } }]
                             });
