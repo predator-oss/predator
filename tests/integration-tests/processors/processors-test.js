@@ -1,5 +1,5 @@
 const should = require('should'),
-    uuid = require('uuid/v4');
+    uuid = require('uuid').v4;
 
 const validHeaders = { 'Content-Type': 'application/json' };
 const processorRequestSender = require('./helpers/requestCreator');
@@ -136,7 +136,7 @@ describe('Processors api', function () {
                     description: 'Creates authorization token and saves it in the context',
                     javascript:
                         `{
-                        const uuid = require('uuid/v4');
+                        const uuid = require('uuid').v4;
                         module.exports = {
                         createAuthToken
                         };
@@ -264,7 +264,7 @@ describe('Processors api', function () {
                     description: 'Creates authorization token and saves it in the context',
                     javascript:
                         `{
-                        const uuid = require('uuid/v4');
+                        const uuid = require('uuid').v4;
                         module.exports = {
                         };
 
@@ -285,7 +285,7 @@ describe('Processors api', function () {
                     description: 'Creates authorization token and saves it in the context',
                     javascript:
                         `{
-                        const uuid = require('uuid/v4');
+                        const uuid = require('uuid').v4;
                         module.exports = {
                         hello,
                         };
@@ -307,7 +307,7 @@ describe('Processors api', function () {
                     description: 'Creates authorization token and saves it in the context',
                     javascript:
                         `{
-                        const uuid = require('uuid/v4');
+                        const uuid = require('uuid').v4;
                         module.exports = {
                         hello,
                         };
