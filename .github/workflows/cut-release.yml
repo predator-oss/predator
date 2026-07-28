@@ -1,0 +1,39 @@
+name: Cut release
+
+# Manual release: standard-version bumps the version from conventional commits,
+# writes the changelog, commits and tags, then dispatches the Docker image
+# workflow for the new tag and publishes a GitHub release.
+on:
+  workflow_dispatch:
+    inputs:
+      release_as:
+        description: 'Force a version (e.g. 2.0.0) instead of deriving it from commits'
+        required: false
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+      - run: npx standard-version ${{ inputs.release_as && format('--release-as {0}', inputs.release_as) || '' }}
+      - run: git push --follow-tags origin main
+      - id: tag
+        run: echo "tag=v$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      - run: gh workflow run 'Docker image' --ref '${{ steps.tag.outputs.tag }}'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: gh release create '${{ steps.tag.outputs.tag }}' --title '${{ steps.tag.outputs.tag }}' --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
