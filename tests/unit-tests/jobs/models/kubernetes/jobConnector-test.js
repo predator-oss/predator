@@ -112,9 +112,9 @@ describe('Kubernetes job connector tests', function () {
     describe('Get logs', () => {
         it('Get logs of specific job', async () => {
             requestSenderSendStub.withArgs(sinon.match({ url: 'localhost:80/apis/batch/v1/namespaces/default/jobs/jobPlatformName' })).resolves({
-                spec: { selector: { matchLabels: { 'controller-uid': 'uid' } } }
+                spec: { selector: { matchLabels: { 'batch.kubernetes.io/controller-uid': 'uid' } } }
             });
-            requestSenderSendStub.withArgs(sinon.match({ url: 'localhost:80/api/v1/namespaces/default/pods?labelSelector=controller-uid=uid' })).resolves({
+            requestSenderSendStub.withArgs(sinon.match({ url: 'localhost:80/api/v1/namespaces/default/pods?labelSelector=batch.kubernetes.io%2Fcontroller-uid=uid' })).resolves({
                 items: [{ metadata: { name: 'podA' } }, { metadata: { name: 'podB' } }]
             });
             requestSenderSendStub.withArgs(sinon.match({ url: 'localhost:80/api/v1/namespaces/default/pods/podA/log?container=predator-runner' })).resolves('aLog');
@@ -146,6 +146,9 @@ describe('Kubernetes job connector tests', function () {
                 items: [{ metadata: { uid: 'x' } }]
             });
 
+            requestSenderSendStub.withArgs(sinon.match({ url: 'localhost:80/api/v1/namespaces/default/pods?labelSelector=batch.kubernetes.io%2Fcontroller-uid=x' })).resolves({
+                items: []
+            });
             requestSenderSendStub.withArgs(sinon.match({ url: 'localhost:80/api/v1/namespaces/default/pods?labelSelector=controller-uid=x' })).resolves({
                 items: [{ metadata: { name: 'podA' } }]
             });
@@ -167,7 +170,8 @@ describe('Kubernetes job connector tests', function () {
 
             const result = await jobConnector.deleteAllContainers('predator-runner');
 
-            requestSenderSendStub.args[3][0].should.eql({
+            // The legacy-label fallback adds one extra pods query before this call.
+            requestSenderSendStub.args[4][0].should.eql({
                 url: 'localhost:80/apis/batch/v1/namespaces/default/jobs/predator.job?propagationPolicy=Foreground',
                 method: 'DELETE',
                 headers: {}
