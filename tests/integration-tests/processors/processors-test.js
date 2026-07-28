@@ -22,7 +22,13 @@ describe('Processors api', function () {
                 for (let i = 0; i < numberOfProcessorsToInsert; i++) {
                     const processor = generateRawJSProcessor(i.toString());
                     jsProcessorsArr.push(processor);
-                    const processorRes = await processorRequestSender.createProcessor(processor, validHeaders);
+                    let processorRes = await processorRequestSender.createProcessor(processor, validHeaders);
+                    if (processorRes.statusCode !== 201) {
+                        // A silently dropped insert here used to surface later as a
+                        // baffling off-by-one in the paging assertions.
+                        processorRes = await processorRequestSender.createProcessor(processor, validHeaders);
+                    }
+                    should(processorRes.statusCode).equal(201, `failed inserting processor ${i}: ${JSON.stringify(processorRes.body)}`);
                     processorsInserted.push(processorRes);
                 }
             });
