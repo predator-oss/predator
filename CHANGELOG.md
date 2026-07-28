@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.8.0](https://github.com/Zooz/predator/compare/v1.7.1...v1.8.0) (2026-07-28)
+
+
+### Features
+
+* **config:** add DATABASE_PORT support ([#712](https://github.com/Zooz/predator/issues/712)) ([42e50c7](https://github.com/Zooz/predator/commit/42e50c7e6a76ad2c8f64fb9c235a5700e6c76f77))
+* node 24, zero known vulnerabilities, arm64 image, instrument UI redesign and GitHub Actions CI ([#1](https://github.com/Zooz/predator/issues/1)) ([2fec92a](https://github.com/Zooz/predator/commit/2fec92abd52d27bdc2e8cfe6958991902e42ee5c))
+
 ### [1.7.1](https://github.com/Zooz/predator/compare/v1.7.0...v1.7.1) (2024-08-27)
 
 ## [1.7.0](https://github.com/Zooz/predator/compare/v1.6.4...v1.7.0) (2024-08-25)
