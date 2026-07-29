@@ -86,3 +86,11 @@ jobs:
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< '${{ steps.meta.outputs.json }}') \
             $(printf 'ghcr.io/${{ github.repository }}@sha256:%s ' *)
+      - name: Boot smoke test
+        # A green build proves nothing about runtime: prod-only installs have
+        # shipped boot crashes that dev-dep test runs cannot see.
+        run: |
+          TAG=$(jq -r '.tags[0]' <<< '${{ steps.meta.outputs.json }}')
+          docker run -d --name smoke -p 8080:80 -e PORT=80 -e JOB_PLATFORM=DOCKER -e INTERNAL_ADDRESS=http://localhost:8080/v1 "$TAG"
+          for i in $(seq 1 30); do curl -sf localhost:8080/v1/config >/dev/null && exit 0; sleep 2; done
+          docker logs smoke; exit 1
