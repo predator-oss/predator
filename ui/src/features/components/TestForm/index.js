@@ -20,6 +20,7 @@ import CollapsibleScenarioConfig from './collapsibleScenarioConfig';
 import { FileDrop } from 'react-file-drop';
 import env from '../../../App/common/env';
 import { CONTENT_TYPES } from './constants'
+import { getKafkaTopics, getKafkaConsumerGroups } from '../../redux/apis/kafkaApi'
 import { isUrlValid, URL_FIELDS } from '../../../validators/validate-urls';
 import IconButton from '../../../components/IconButton';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
@@ -28,6 +29,8 @@ import { faSave, faPlayCircle, faStar as emptyStar } from '@fortawesome/free-reg
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { EMPTY_STRING, INVALID_URL_MESSAGE } from '../../../constants';
 import InfoToolTip from "../InfoToolTip";
+import CustomDropdown from '../../../components/Dropdown/CustomDropdown';
+import Input from '../../../components/Input';
 
 const SLEEP = 'sleep';
 const MAX_PROBABILITY = 100;
@@ -42,6 +45,11 @@ export class TestForm extends React.Component {
         scenarios: [],
         before: null,
         type: 'basic',
+        testEngine: 'http',
+        kafkaBrokers: '',
+        kafkaConsumerGroup: '',
+        kafkaTopics: [],
+        kafkaConsumerGroups: [],
         name: '',
         description: '',
         currentScenarioIndex: 0,
@@ -135,6 +143,9 @@ export class TestForm extends React.Component {
     componentDidMount () {
       this.props.getProcessors({ exclude: 'javascript' });
       this.props.initForm();
+      if (this.state.testEngine === 'kafka') {
+        this.loadKafkaDiscovery();
+      }
       if (this.state.editMode || this.props.cloneMode) {
         if (this.props.data.csv_file_id) {
           this.props.getFileMetadata(this.props.data.csv_file_id);
@@ -152,7 +163,7 @@ export class TestForm extends React.Component {
 
     render () {
       const { createTestError, processorsError, closeDialog, processorsLoading, processorsList, csvMetadata } = this.props;
-      const { name, description, urls, baseUrl, processorId, editMode, maxSupportedScenariosUi, validationErrors, isFavorite } = this.state;
+      const { name, description, urls, baseUrl, processorId, editMode, maxSupportedScenariosUi, validationErrors, isFavorite, testEngine, kafkaBrokers, kafkaConsumerGroup, kafkaConsumerGroups } = this.state;
       const error = createTestError || processorsError || maxSupportedScenariosUi;
       return (
         <Modal style={{ paddingTop: '12px', paddingBottom: '12px', paddingLeft: '40px', paddingRight: '40px' }}
@@ -183,6 +194,13 @@ export class TestForm extends React.Component {
                     </TitleInput>
                   </div>
                   <div className={style['input-container']}>
+                    <TitleInput style={{ flex: '1', marginTop: '2px' }} title={'Test type'}>
+                      <CustomDropdown list={['http', 'kafka']} value={testEngine}
+                        onChange={(value) => this.onChangeTestEngine(value)} placeHolder={'http'} />
+                    </TitleInput>
+                  </div>
+                  {testEngine === 'http' &&
+                  <div className={style['input-container']}>
                     <TitleInput style={{ flex: '1', marginTop: '2px' }} title={'Base url'}>
                       <ErrorWrapper errorText={validationErrors[URL_FIELDS.BASE].error}>
                         <TextArea maxRows={5} value={baseUrl} placeholder={'http://my.api.com/'}
@@ -193,7 +211,23 @@ export class TestForm extends React.Component {
                           }} />
                       </ErrorWrapper>
                     </TitleInput>
-                  </div>
+                  </div>}
+                  {testEngine === 'kafka' &&
+                  <div className={style['input-container']}>
+                    <TitleInput style={{ flex: '1', marginTop: '2px' }} title={'Kafka brokers'}>
+                      <TextArea maxRows={2} value={kafkaBrokers} placeholder={'broker1:9092,broker2:9092'}
+                        onChange={(evt) => this.setState({ kafkaBrokers: evt.target.value })} />
+                    </TitleInput>
+                  </div>}
+                  {testEngine === 'kafka' &&
+                  <div className={style['input-container']}>
+                    <TitleInput style={{ flex: '1', marginTop: '2px' }} title={'Monitor consumer group (lag)'}>
+                      <Input value={kafkaConsumerGroup}
+                        list={kafkaConsumerGroups}
+                        placeholder={'billing'}
+                        onChange={(evt) => this.setState({ kafkaConsumerGroup: evt.target.value })} />
+                    </TitleInput>
+                  </div>}
                   <div className={style['input-container']}>
                     <TitleInput style={{ flex: '1', marginTop: '2px' }} title={'Processor'}>
                       <ProcessorsDropDown
@@ -228,6 +262,19 @@ export class TestForm extends React.Component {
         name: funcName
       })) : [];
       return processorsExportedFunctions;
+    };
+
+    loadKafkaDiscovery = () => {
+      // Best-effort: the pickers are conveniences, so a discovery failure
+      // (kafka unconfigured/unreachable) must not block authoring.
+      getKafkaTopics().then((res) => this.setState({ kafkaTopics: res.data })).catch(() => {});
+      getKafkaConsumerGroups().then((res) => this.setState({ kafkaConsumerGroups: res.data })).catch(() => {});
+    };
+
+    onChangeTestEngine = (value) => {
+      this.setState({ testEngine: value }, () => {
+        if (value === 'kafka') this.loadKafkaDiscovery();
+      });
     };
 
     onProcessorChosen = (id) => {
@@ -316,6 +363,9 @@ export class TestForm extends React.Component {
     initStep (type) {
       if (type === SLEEP) {
         return { id: uuid(), sleep: 10, type };
+      }
+      if (this.state.testEngine === 'kafka') {
+        return { id: uuid(), engine: 'kafka', topic: '', key: '', message: {} };
       }
       return {
         id: uuid(),
@@ -500,6 +550,8 @@ export class TestForm extends React.Component {
                       <StepsList
                         steps={tabData.steps}
                         editMode={editMode}
+                        testEngine={this.state.testEngine}
+                        kafkaTopics={this.state.kafkaTopics}
                         onChangeValueOfStep={this.onChangeValueOfStep}
                         processorsExportedFunctions={processorsExportedFunctions}
                         onDeleteStep={this.onDeleteStep}

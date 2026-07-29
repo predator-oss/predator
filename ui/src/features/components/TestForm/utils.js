@@ -11,34 +11,66 @@ const SLEEP = 'sleep';
 const MAX_PROBABILITY = 100;
 
 export const createTestRequest = (data) => {
-  const { name, description, scenarios, type, baseUrl, before, processorId, csvFileId, isFavorite } = data;
+  const { name, description, scenarios, type, baseUrl, before, processorId, csvFileId, isFavorite,
+    testEngine, kafkaBrokers, kafkaConsumerGroup } = data;
+  const isKafka = testEngine === 'kafka';
+
   const scenariosRequest = scenarios.map((scenario) => {
     return {
       name: scenario.scenario_name,
       weight: scenario.weight,
+      engine: isKafka ? 'kafka' : undefined,
       beforeScenario: scenario.beforeScenario,
       afterScenario: scenario.afterScenario,
-      flow: prepareFlow(scenario.steps),
+      flow: isKafka ? prepareKafkaFlow(scenario.steps) : prepareFlow(scenario.steps),
       additionalInfo: scenario.additionalInfo.isEnable ? scenario.additionalInfo.body : undefined
     }
   });
+
+  const brokers = (kafkaBrokers || '').split(',').map((b) => b.trim()).filter(Boolean);
+  const config = isKafka
+    ? {
+        target: `kafka://${brokers.join(',')}`,
+        engines: { kafka: {} },
+        kafka: Object.assign(
+          { brokers },
+          kafkaConsumerGroup ? { lagMonitor: { consumerGroup: kafkaConsumerGroup } } : {}
+        )
+      }
+    : {
+        target: baseUrl,
+        plugins: { expect: {} }
+      };
+
   return {
     name,
     description,
     type,
     processor_id: processorId,
     artillery_test: {
-      config: {
-        target: baseUrl,
-        plugins: { expect: {} }
-      },
-      before: before ? { flow: prepareFlow(before.steps) } : undefined,
+      config,
+      before: (!isKafka && before) ? { flow: prepareFlow(before.steps) } : undefined,
       scenarios: scenariosRequest
     },
     csv_file_id: csvFileId,
     is_favorite: isFavorite
   }
 };
+
+function prepareKafkaFlow(steps) {
+  return steps.map((step) => {
+    if (step.type === SLEEP) {
+      return { think: step.sleep };
+    }
+    return {
+      produce: {
+        topic: step.topic,
+        key: step.key || undefined,
+        message: typeof step.message === 'object' ? JSON.stringify(step.message) : step.message
+      }
+    };
+  });
+}
 export const createDefaultExpectation = () => {
   return { type: EXPECTATIONS_TYPE.STATUS_CODE, ...EXPECTATIONS_SPEC_BY_PROP[EXPECTATIONS_TYPE.STATUS_CODE] }
 };
@@ -53,12 +85,20 @@ export const createDefaultCapture = () => {
 export const createStateForEditTest = (test, cloneMode) => {
   test = cloneDeep(test);
   const { artillery_test } = test;
-  const scenarios = testScenarioToTestScenario(artillery_test.scenarios);
+  const cfg = artillery_test.config || {};
+  const isKafka = !!(cfg.engines && cfg.engines.kafka);
+  const scenarios = testScenarioToTestScenario(artillery_test.scenarios, isKafka);
+  const kafkaCfg = cfg.kafka || {};
   return {
     name: test.name,
     description: test.description,
     id: test.id,
-    baseUrl: artillery_test.config.target,
+    baseUrl: isKafka ? '' : cfg.target,
+    testEngine: isKafka ? 'kafka' : 'http',
+    kafkaBrokers: (kafkaCfg.brokers || []).join(','),
+    kafkaConsumerGroup: (kafkaCfg.lagMonitor && kafkaCfg.lagMonitor.consumerGroup) || '',
+    kafkaTopics: [],
+    kafkaConsumerGroups: [],
     before: testBeforeToStateBefore(artillery_test.before),
     scenarios: scenarios,
     activeTabKey: scenarios[0] && scenarios[0].id,
@@ -84,7 +124,7 @@ function testBeforeToStateBefore(before) {
   }
 }
 
-function testScenarioToTestScenario(testScenarios) {
+function testScenarioToTestScenario(testScenarios, isKafka) {
   if (!testScenarios) {
     return []
   }
@@ -96,9 +136,22 @@ function testScenarioToTestScenario(testScenarios) {
       afterScenario: scenario.afterScenario,
       weight: scenario.weight,
       additionalInfo: { body: scenario.additionalInfo, isEnable: !!scenario.additionalInfo },
-      steps: buildStepsFromFlow(scenario.flow)
+      steps: isKafka ? buildKafkaStepsFromFlow(scenario.flow) : buildStepsFromFlow(scenario.flow)
     }
   })
+}
+
+function buildKafkaStepsFromFlow(flow) {
+  if (!flow) return [];
+  return flow.map((request) => {
+    if (request.think !== undefined) {
+      return { type: SLEEP, id: uuid(), sleep: request.think };
+    }
+    const p = request.produce || {};
+    let message = p.message;
+    try { message = typeof p.message === 'string' ? JSON.parse(p.message) : p.message; } catch (e) { /* leave as string */ }
+    return { type: 'kafka', engine: 'kafka', id: uuid(), topic: p.topic, key: p.key || '', message: message || {} };
+  });
 }
 
 function buildStepsFromFlow(flow) {
