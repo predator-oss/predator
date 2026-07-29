@@ -22,8 +22,8 @@ import TitleInput from "../components/TitleInput";
 
 const noDataMsg = 'There is no data to display.';
 const errorMsgGetReports = 'Error occurred while trying to get all reports for test.';
-const columnsNames = ['compare', 'start_time', 'end_time', 'duration', 'status', 'arrival_rate',
-    'ramp_to', 'last_success_rate', 'avg_rps', 'parallelism', 'notes', 'score', 'report', 'grafana_report', 'rerun', 'raw', 'logs'];
+const columnsNames = ['compare', 'started_at', 'duration', 'status', 'load',
+    'last_success_rate', 'avg_rps', 'notes', 'score', 'report_actions'];
 
 const DESCRIPTION = 'All reports for a given test.';
 

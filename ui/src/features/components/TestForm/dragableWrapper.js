@@ -12,10 +12,10 @@ import {
 } from 'react-dnd'
 
 const style = {
-    border: '1px dashed gray',
+    border: '1px dashed var(--border-strong)',
     padding: '0.5rem 1rem',
     marginBottom: '.5rem',
-    backgroundColor: 'white',
+    backgroundColor: 'var(--bg-surface)',
     cursor: 'move'
 }
 

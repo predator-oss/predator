@@ -229,3 +229,12 @@
 
 .score--held { color: var(--held-fg); }
 .score--breach { color: var(--breach-fg); }
+
+// Row action toolbar: the six per-row operations share one cell.
+.actions-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
+}

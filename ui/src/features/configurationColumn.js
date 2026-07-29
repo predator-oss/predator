@@ -14,7 +14,9 @@ import {
   faStopCircle,
   faTrashAlt,
   faClone,
-  faPen
+  faPen,
+  faChartLine,
+  faFileCode
 } from '@fortawesome/free-solid-svg-icons'
 import classnames from 'classnames';
 import css from './configurationColumn.scss';
@@ -236,6 +238,71 @@ export const getColumns = ({ columnsNames, sortHeader = '', onSort, onReportView
       ),
       // The identifying column never loses space to icon columns.
       minWidth: 170
+    },
+    {
+      // One narrow mono cell instead of two wrapping date columns; end time on hover.
+      id: 'started_at',
+      Header: () => (
+        <TableHeader padding={'8px'} sortable
+          up={sortHeader.indexOf('start_time') > -1 && sortHeader.indexOf('+') > -1}
+          down={sortHeader.indexOf('start_time') > -1 && sortHeader.indexOf('-') > -1}
+          onClick={() => {
+            onSort('start_time')
+          }}
+        >
+          Started
+        </TableHeader>
+      ),
+      accessor: data => {
+        const started = dateFormatter(data.start_time);
+        const end = data.end_time ? new Moment(data.end_time).local().format('lll') : 'still running';
+        return <span title={`ended: ${end}`}>{started}</span>;
+      },
+      width: extraExLargeSize,
+      className: css['center-flex']
+    },
+    {
+      // Load definition in one glance: rate, ramp target and parallel runners.
+      id: 'load',
+      Header: () => (
+        <TableHeader padding={'8px'} sortable={false}>
+          Load
+        </TableHeader>
+      ),
+      accessor: data => {
+        const rate = data.arrival_rate || data.arrival_count;
+        return (
+          <span className={css['time-cell']} title={'arrival rate' + (data.ramp_to ? ', ramping' : '') + (data.parallelism > 1 ? `, ${data.parallelism} runners` : '')}>
+            {rate}{data.ramp_to ? `\u2192${data.ramp_to}` : ''}{data.parallelism > 1 ? ` \u00d7${data.parallelism}` : ''}
+          </span>
+        );
+      },
+      width: largeSize,
+      className: css['center-flex']
+    },
+    {
+      // Every per-row action in one quiet toolbar instead of six labelled columns.
+      id: 'report_actions',
+      Header: () => (
+        <TableHeader padding={'8px'} sortable={false}>
+          Actions
+        </TableHeader>
+      ),
+      accessor: data => {
+        const running = data.status === 'in_progress' || data.status === 'started';
+        return (
+          <div className={css['actions-cell']}>
+            <ViewButton icon={faEye} text={'Report'} onClick={(e) => { e.stopPropagation(); onReportView(data); }} />
+            {data.grafana_report && <ViewButton icon={faChartLine} text={'Grafana'} onClick={(e) => { e.stopPropagation(); window.open(data.grafana_report, '_blank'); }} />}
+            <ViewButton icon={faRedo} text={'Rerun'} onClick={(e) => { e.stopPropagation(); onRunTest(data); }} />
+            <ViewButton icon={faFileCode} text={'Raw'} onClick={(e) => { e.stopPropagation(); onRawView(data); }} />
+            <ViewButton icon={faCloudDownloadAlt} text={'Logs'} onClick={(e) => { e.stopPropagation(); window.open(`${env.PREDATOR_URL}/jobs/${data.job_id}/runs/${data.report_id}/logs`, '_blank'); }} />
+            <ViewButton disabled={!running} icon={faStopCircle} text={'Stop'} onClick={(e) => { e.stopPropagation(); onStop(data); }} />
+          </div>
+        );
+      },
+      width: extraExLargeSize + 60,
+      className: css['center-flex']
     },
     {
       id: 'start_time',
@@ -611,7 +678,12 @@ const ViewButton = ({ onClick, icon, disabled, text }) => {
     className={classnames(css['icon'], { [css['action-style']]: !disabled, [css['disabled-button']]: disabled })}
     onClick={() => !disabled && onClick} icon={icon} /> : text || 'View';
 
-  return (<div className={css['action-style']} onClick={onClick}>{element}</div>)
+  // Icon-only buttons carry their label as a tooltip and for screen readers.
+  return (
+    <div className={classnames(css['action-style'], { [css['disabled-button']]: disabled })}
+      title={text} aria-label={text} role={onClick ? 'button' : undefined}
+      onClick={disabled ? undefined : onClick}>{element}</div>
+  );
 };
 
 const CompareCheckbox = ({ data, onReportSelected, selectedReports }) => {

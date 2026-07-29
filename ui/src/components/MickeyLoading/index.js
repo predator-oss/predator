@@ -51,18 +51,19 @@ const MickeyLoading = ({ style = {}, statuses = [], timeInSec = 60, passedTime =
       <div style={{ display: 'flex', justifyContent: 'space-between', ...style }}>
         <div style={{
           flex: 1,
-          backgroundColor: 'white',
+          backgroundColor: 'var(--bg-active)',
+          border: '1px solid var(--border-subtle)',
           borderRadius: '20px',
           marginRight: '5px'
         }}>
-          <div style={{ backgroundColor: 'green', display: 'flex', borderRadius: '20px', justifyContent: 'flex-end', minWidth: '40px', transition: 'width 1s', width: `${value}%` }}>
+          <div style={{ backgroundColor: 'var(--accent)', display: 'flex', borderRadius: '20px', justifyContent: 'flex-end', minWidth: '40px', transition: 'width 1s', width: `${value}%` }}>
             <img width={'40px'} src={logo} alt={'Mickey'} />
           </div>
 
         </div>
-        <div style={{ alignSelf: 'center', width: '40px' }}>{value}%</div>
+        <div className='mono' style={{ alignSelf: 'center', width: '40px', color: 'var(--fg-secondary)' }}>{value}%</div>
       </div>
-      {status && <div style={{ alignSelf: 'center', marginTop: '10px' }}>{status}</div>}
+      {status && <div style={{ alignSelf: 'center', marginTop: '10px', color: 'var(--fg-secondary)' }}>{status}</div>}
     </div>
   )
 }
