@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [1.8.4](https://github.com/predator-oss/predator/compare/v1.8.3...v1.8.4) (2026-07-29)
 
+### [1.8.4](https://github.com/predator-oss/predator/compare/v1.8.3...v1.8.4) (2026-07-29)
+
 ### 1.8.3 (2026-07-29)
 
 
