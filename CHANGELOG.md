@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.8.3](https://github.com/predator-oss/predator/compare/v1.8.2...v1.8.3) (2026-07-29)
+
+
+### Features
+
+* migrate to pnpm workspace ([#6](https://github.com/predator-oss/predator/issues/6)) ([962462b](https://github.com/predator-oss/predator/commit/962462b754e893cf4982342e135c9a2deb45e65b))
+* **ui:** last reports fits without horizontal scroll ([7bfba72](https://github.com/predator-oss/predator/commit/7bfba721620273d983734181ab5f6049263f6c79))
+
+
+### Bug Fixes
+
+* ui shows the release version, not ui/package.json's stale one; drop feedback form button ([454d4b1](https://github.com/predator-oss/predator/commit/454d4b15ba17308214fec8c3da167f70ede6b6ee))
+
 ### [1.8.2](https://github.com/predator-oss/predator/compare/v1.8.1...v1.8.2) (2026-07-29)
 
 
