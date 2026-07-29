@@ -231,6 +231,9 @@ export class TestForm extends React.Component {
                           onChange={(evt) => this.onKafkaBrokersChange(evt.target.value)} />
                       </TitleInput>
                       {this.renderKafkaStatus(kafkaStatus, kafkaStatusMessage, kafkaTopics, kafkaConsumerGroups)}
+                      <div style={{ marginTop: '4px', fontSize: 'var(--text-xs)', color: 'var(--fg-secondary)' }}>
+                        must be reachable from the load runner's network, which may differ from Predator's
+                      </div>
                     </div>
                     <TitleInput title={'Monitor consumer groups (lag)'}>
                       {this.renderMonitoredGroups(kafkaMonitoredGroups, kafkaConsumerGroups, kafkaCustomGroup)}
