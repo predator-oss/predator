@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.8.1](https://github.com/Zooz/predator/compare/v1.8.0...v1.8.1) (2026-07-29)
+
+
+### Bug Fixes
+
+* arm64 image crashes at boot — compile sqlite3 from source ([#3](https://github.com/Zooz/predator/issues/3)) ([3c61119](https://github.com/Zooz/predator/commit/3c61119534b6add797aef3c77264ed4f46a8a726))
+* read job pods via batch.kubernetes.io/controller-uid with legacy fallback ([#2](https://github.com/Zooz/predator/issues/2)) ([5769b25](https://github.com/Zooz/predator/commit/5769b2590e7202e51ef6a7758e50a555bb7ad1e0))
+
 ## [1.8.0](https://github.com/Zooz/predator/compare/v1.7.1...v1.8.0) (2026-07-28)
 
 
