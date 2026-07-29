@@ -1,6 +1,6 @@
 # Integrating Chaos Mesh with Predator
 
-!!! TIP "Supported from version zooz/predator:1.7.0"
+!!! TIP "Supported from version ghcr.io/predator-oss/predator:1.7.0"
 !!! TIP "Supported only in Kubernetes"
 <img src="images/chaos-mesh-logo.png" align="right" alt="Logo" width="150"/>
 ## Introduction

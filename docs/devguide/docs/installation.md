@@ -9,12 +9,17 @@ Predator is production ready and fully tested and can be deployed in all of the 
 
 1. Deploy Predator using only tagged releases and not `latest`.
 
-2. Predator-Runner docker image version (`zooz/predator-runner:$TAGGED_VERSION`) must match the Predator's `major.minor` version running in order to be fully compatible with all features. Patched versions don't have to match, but it is recommended to use latest patch version.
-    - For example, Predator version 1.6 (`zooz/predator:1.6`) should run Predator-Runner version 1.6 as well (`zooz/predator-runner:1.6`). 
+2. Predator-Runner docker image version (`ghcr.io/predator-oss/predator-runner:$TAGGED_VERSION`) must match the Predator's `major.minor` version running in order to be fully compatible with all features. Patched versions don't have to match, but it is recommended to use latest patch version.
+    - For example, Predator version 1.6 (`ghcr.io/predator-oss/predator:1.8`) should run Predator-Runner version 1.6 as well (`ghcr.io/predator-oss/predator-runner:1.6`). 
 
 ## Kubernetes
 
-Install Predator from the [Helm Hub](https://hub.helm.sh/charts/zooz/predator)  
+Install Predator from the [predator-oss helm repository](https://github.com/predator-oss/helm-charts):
+
+```bash
+helm repo add predator-oss https://predator-oss.github.io/helm-charts
+helm install predator predator-oss/predator
+```  
 
 ## DC/OS
 
@@ -31,11 +36,11 @@ In order to avoid DIND, Predator will start its runners as siblings using the do
 
 <b>Without persisted storage:</b>
 
-```docker run -d -e JOB_PLATFORM=DOCKER -e INTERNAL_ADDRESS=http://$MACHINE_IP:80/v1 -p 80:80 --name predator -v /var/run/docker.sock:/var/run/docker.sock zooz/predator:1.5```
+```docker run -d -e JOB_PLATFORM=DOCKER -e INTERNAL_ADDRESS=http://$MACHINE_IP:80/v1 -p 80:80 --name predator -v /var/run/docker.sock:/var/run/docker.sock ghcr.io/predator-oss/predator:1.8```
 
 <b>With persisted storage:</b>
 
-```docker run -d -e SQLITE_STORAGE=db/predator -e JOB_PLATFORM=DOCKER -e INTERNAL_ADDRESS=http://$MACHINE_IP:80/v1 -p 80:80 --name predator -v /var/run/docker.sock:/var/run/docker.sock -v /tmp/predator:/usr/db zooz/predator:1.5```
+```docker run -d -e SQLITE_STORAGE=db/predator -e JOB_PLATFORM=DOCKER -e INTERNAL_ADDRESS=http://$MACHINE_IP:80/v1 -p 80:80 --name predator -v /var/run/docker.sock:/var/run/docker.sock -v /tmp/predator:/usr/db ghcr.io/predator-oss/predator:1.8```
 
 Explanations:
 

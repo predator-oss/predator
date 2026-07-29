@@ -1,5 +1,5 @@
 # Benchmarks
-!!! TIP "Supported from version zooz/predator:1.3.0"
+!!! TIP "Supported from version ghcr.io/predator-oss/predator:1.3.0"
 
 ## Motivation
 Load test results increase in their value and importance when compared to a certain benchmark. 

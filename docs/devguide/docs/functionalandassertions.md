@@ -1,5 +1,5 @@
 # Functional Tests and Assertions
-!!! TIP "Supported from version zooz/predator:1.5.0"
+!!! TIP "Supported from version ghcr.io/predator-oss/predator:1.8.0"
 
 Load tests are important to stress the system and see how it is dealing with the stress. The actual functionality and acceptance tests are not usually tested in load tests.
 For this, Predator offers running **functional tests with assertions**.

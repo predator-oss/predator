@@ -9,7 +9,7 @@ Below are variables Predator can be configured with.
 | Environment Variable                            | Configuration key      	                     | Description                                                                             	                                 | Configurable from UI/API  	| Default value               	                 |
 |-------------------------------------------------|----------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|---------------------------- |-----------------------------------------------|
 | INTERNAL_ADDRESS                                | internal_address       	                     | The local ip address of your machine                                                    	                                 | ✓                        	| 	                                             |
-| RUNNER_DOCKER_IMAGE                             | runner_docker_image    	                     | The predator-runner docker image that will run the test                                           	                       | ✓                        	| zooz/predator-runner:$LATEST_TAGGED_VERSION 	 |
+| RUNNER_DOCKER_IMAGE                             | runner_docker_image    	                     | The predator-runner docker image that will run the test                                           	                       | ✓                        	| ghcr.io/predator-oss/predator-runner:$LATEST_TAGGED_VERSION 	 |
 | RUNNER_CPU                                      | runner_cpu          	                        | Number of CPU use by the each runner                                                              	                       | ✓                        	| 1                           	                 |
 | RUNNER_MEMORY                                   | runner_memory       	                        | Max memory to use by each runner                                                        	                                 | ✓                        	| 256                      	                    |
 | DEFAULT_EMAIL_ADDRESS                           | default_email_address                        | Default email to send final report to, address can be configured                        	                                 | ✓                        	| 	                                             |
@@ -21,7 +21,7 @@ Below are variables Predator can be configured with.
 | MAX_UPLOAD_FILE_SIZE_MB                         |                                              | Maximum file size (in megabytes) that is allowed for uploading CSV files                                                  |                             | 10                                            |
 
 !!! TIP "Note"
-    RUNNER_DOCKER_IMAGE (`zooz/predator-runner:$TAGGED_VERSION`) should match the Predator's version running in order to be fully compatible with all features.
+    RUNNER_DOCKER_IMAGE (`ghcr.io/predator-oss/predator-runner:$TAGGED_VERSION`) should match the Predator's version running in order to be fully compatible with all features.
 
 ## Database
 | Environment Variable 	| Description                                                                     	| Configurable from UI/API 	| Default value 	|

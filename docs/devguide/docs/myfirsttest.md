@@ -6,7 +6,7 @@ In this section, we will walk you through the steps of creating a simple test in
     To make it easy for you to follow along with the steps below, we created a demo Predator docker image. This image allows you to invoke our fictitious petstore API, used in the examples that follow. You can retrieve and run the docker image with the following command (just make sure to replace {MACHINE_IP} with the IP address of your own machine):
 
     ```
-    docker run -d -p 3000:3000 --name predator-petstore zooz/predator-builds:petstore    
+    docker run -d -p 3000:3000 --name predator-petstore ghcr.io/predator-oss/predator-builds:petstore    
     ```
 
 

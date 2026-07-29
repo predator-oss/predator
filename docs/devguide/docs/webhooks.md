@@ -1,5 +1,5 @@
 # Webhooks
-!!! TIP "Supported from version zooz/predator:1.5.0"
+!!! TIP "Supported from version ghcr.io/predator-oss/predator:1.8.0"
 
 Webhooks are events that notify you on test progress. 
 Webhooks are supported in Slack or JSON format for an easy server to server integration. 

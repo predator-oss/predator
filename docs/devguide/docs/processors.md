@@ -1,4 +1,4 @@
-!!! TIP "Supported from version zooz/predator:1.2.0"
+!!! TIP "Supported from version ghcr.io/predator-oss/predator:1.2.0"
 
 Use `processors` to inject custom JavaScript into the test flows. This allows the test flow to be as flexible as possible by creating application resources along the way that are needed for future requests or flow processing.
 

@@ -6,7 +6,7 @@ The ability to spin up an endless amount of Predator-Runners (as long as you hav
 
 ### Predator-Runner
 
-<u>[Predator-Runner](https://github.com/Zooz/predator-runner)</u> is a Node.js project which runs a custom version of [artillery](https://github.com/artilleryio/artillery)
+<u>[Predator-Runner](https://github.com/predator-oss/predator-runner)</u> is a Node.js project which runs a custom version of [artillery](https://github.com/artilleryio/artillery)
  at its core.  
 While Node.js is a good fit for the use-case of Predator-Runner as its main responsibility is to fire HTTP requests (Non-blocking I/O), it's also limited to 1 core usage (when cluster/child modules are not involved, in which case here they are not).  
 It's also important to note that when a Node.js process reaches near 100% CPU it's starting to report inaccurate results about latency because the event loop is extremely slow.  

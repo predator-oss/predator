@@ -2,7 +2,7 @@
 
 First off, thanks for taking the time to contribute! 
 
-The following is a set of guidelines for contributing to Predator and its packages, which are hosted in the [Zooz Predator](https://github.com/Zooz/predator) project on GitHub. These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request.
+The following is a set of guidelines for contributing to Predator and its packages, which are hosted in the [Zooz Predator](https://github.com/predator-oss/predator) project on GitHub. These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request.
 
 ## Submitting a Bug Report
 Bugs are tracked as [GitHub issues](https://guides.github.com/features/issues/). Provide the following information when submitting a bug:

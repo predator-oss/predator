@@ -1,5 +1,5 @@
 # Streaming
-!!! TIP "Supported from version zooz/predator:1.6.0"
+!!! TIP "Supported from version ghcr.io/predator-oss/predator:1.8.0"
 
 Produce informative resources to streaming platforms that will allow you to create consumers
 and handle the data as you see fit. The resources published have a generic schema with all of the test, job, and reports 

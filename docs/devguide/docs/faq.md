@@ -14,7 +14,7 @@ The Predator-Runner docker that is reporting the test results back to Predator i
 which is why the test runs but no report is generated. When installing Predator in Docker, the following command is used:
 ```
 docker run -d -e JOB_PLATFORM=DOCKER -e INTERNAL_ADDRESS=http://$MACHINE_IP:80/v1 \
--p 80:80 --name predator -v /var/run/docker.sock:/var/run/docker.sock zooz/predator
+-p 80:80 --name predator -v /var/run/docker.sock:/var/run/docker.sock ghcr.io/predator-oss/predator
 ```
 
 The `INTERNAL_ADDRESS=http://$MACHINE_IP:80/v1` is what the Predator-Runner uses to communicate with Predator, 
@@ -72,7 +72,7 @@ In this example, the content-type used in the request is `text/html` and the bod
 
 ### <b>I deployed Predator with Kuberenetes/Metronome but I need to customize the predator-runner job configuration (change CPU, memory, add image pull policy, etc).</b>
 
-!!! TIP "Supported from version zooz/predator:1.4.0"
+!!! TIP "Supported from version ghcr.io/predator-oss/predator:1.4.0"
 
 This is possible by configuring Predator with the `custom_runner_definition` parameter. This is a JSON value that will 
 be merged with the runner job definition when creating new jobs in both Kuberenetes and Metronome platforms. 
