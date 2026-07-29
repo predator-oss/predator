@@ -16,6 +16,9 @@ permissions:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    # QEMU arm64 builds have hung indefinitely on tag dispatches; fail fast
+    # and re-dispatch instead of wedging for hours.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
       - uses: docker/setup-qemu-action@v3
