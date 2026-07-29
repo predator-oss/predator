@@ -20,6 +20,8 @@ export default class StepsList extends React.Component {
       editMode,
       validationError,
       validateUrl,
+      testEngine,
+      kafkaTopics,
     } = this.props;
     return (<div style={{
       width: '100%',
@@ -52,6 +54,8 @@ export default class StepsList extends React.Component {
                 onDuplicateStep={onDuplicateStep}
                 validationError={validationError}
                 validateUrl={validateUrl}
+                testEngine={testEngine}
+                kafkaTopics={kafkaTopics}
               />
             </DragableWrapper>
           )

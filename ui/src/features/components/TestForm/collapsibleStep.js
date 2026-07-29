@@ -1,6 +1,7 @@
 import React from 'react';
 import CollapsibleItem from '../../../components/CollapsibleItem/CollapsibleItem';
 import StepForm from './StepForm';
+import KafkaStepForm from './KafkaStepForm';
 import SleepForm from './SleepForm';
 import Input from '../../../components/Input';
 
@@ -92,6 +93,13 @@ export default class CollapsibleStep extends React.Component {
               index={index}
               onChangeValue={onChangeValueOfStep}
             /> ||
+            (this.props.testEngine === 'kafka' &&
+            <KafkaStepForm
+              step={step}
+              index={index}
+              onChangeValue={onChangeValueOfStep}
+              topics={this.props.kafkaTopics}
+            />) ||
             <StepForm
               step={step}
               validationError={validationError}
