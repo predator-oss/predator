@@ -14,7 +14,7 @@ describe('Create job global tests', function () {
     this.timeout(20000);
     before(async () => {
         await configRequestCreator.updateConfig({
-            runner_docker_image: 'zooz/predator-runner:latest',
+            runner_docker_image: 'ghcr.io/predator-oss/predator-runner:latest',
             custom_runner_definition: {
                 'eu-west-1': {
                     capacity_provider: 'FARGATE_SPOT',

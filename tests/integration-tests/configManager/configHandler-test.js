@@ -10,7 +10,7 @@ const defaultBody = {
     interval_cleanup_finished_containers_ms: 900000,
     allow_insecure_tls: false,
     internal_address: 'http://localhost:80',
-    runner_docker_image: `zooz/predator-runner:${RUNNER_VERSION}`,
+    runner_docker_image: `ghcr.io/predator-oss/predator-runner:${RUNNER_VERSION}`,
     job_platform: process.env.JOB_PLATFORM || 'DOCKER',
     runner_cpu: 1,
     runner_memory: 256,

@@ -38,7 +38,7 @@ describe.skip('Create job specific docker tests', async function () {
                 await configRequestCreator.init();
 
                 await configRequestCreator.updateConfig({
-                    runner_docker_image: 'zooz/predator-runner:latest'
+                    runner_docker_image: 'ghcr.io/predator-oss/predator-runner:latest'
                 });
 
                 const requestBody = require('../../testExamples/Basic_test');
