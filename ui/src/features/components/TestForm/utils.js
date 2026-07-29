@@ -10,37 +10,54 @@ import {
 const SLEEP = 'sleep';
 const MAX_PROBABILITY = 100;
 
+export const ENGINE_MIXED = 'kafka + http';
+
 export const createTestRequest = (data) => {
   const { name, description, scenarios, type, baseUrl, before, processorId, csvFileId, isFavorite,
-    testEngine, kafkaBrokers, kafkaConsumerGroup } = data;
+    testEngine, kafkaBrokers, kafkaMonitoredGroups } = data;
   const isKafka = testEngine === 'kafka';
+  const isMixed = testEngine === ENGINE_MIXED;
+  // artillery engines are per-scenario: a kafka-engine scenario runs produce
+  // steps, everything else runs the default http engine.
+  const scenarioIsKafka = (scenario) => isKafka || (isMixed && scenario.engine === 'kafka');
 
   const scenariosRequest = scenarios.map((scenario) => {
     return {
       name: scenario.scenario_name,
       weight: scenario.weight,
-      engine: isKafka ? 'kafka' : undefined,
+      engine: scenarioIsKafka(scenario) ? 'kafka' : undefined,
       beforeScenario: scenario.beforeScenario,
       afterScenario: scenario.afterScenario,
-      flow: isKafka ? prepareKafkaFlow(scenario.steps) : prepareFlow(scenario.steps),
+      flow: scenarioIsKafka(scenario) ? prepareKafkaFlow(scenario.steps) : prepareFlow(scenario.steps),
       additionalInfo: scenario.additionalInfo.isEnable ? scenario.additionalInfo.body : undefined
     }
   });
 
   const brokers = (kafkaBrokers || '').split(',').map((b) => b.trim()).filter(Boolean);
-  const config = isKafka
-    ? {
-        target: `kafka://${brokers.join(',')}`,
-        engines: { kafka: {} },
-        kafka: Object.assign(
-          { brokers },
-          kafkaConsumerGroup ? { lagMonitor: { consumerGroup: kafkaConsumerGroup } } : {}
-        )
-      }
-    : {
-        target: baseUrl,
-        plugins: { expect: {} }
-      };
+  const kafkaBlock = Object.assign(
+    { brokers },
+    (kafkaMonitoredGroups && kafkaMonitoredGroups.length) ? { lagMonitor: { consumerGroups: kafkaMonitoredGroups } } : {}
+  );
+  let config;
+  if (isKafka) {
+    config = {
+      target: `kafka://${brokers.join(',')}`,
+      engines: { kafka: {} },
+      kafka: kafkaBlock
+    };
+  } else if (isMixed) {
+    config = {
+      target: baseUrl,
+      engines: { kafka: {} },
+      kafka: kafkaBlock,
+      plugins: { expect: {} }
+    };
+  } else {
+    config = {
+      target: baseUrl,
+      plugins: { expect: {} }
+    };
+  }
 
   return {
     name,
@@ -49,7 +66,8 @@ export const createTestRequest = (data) => {
     processor_id: processorId,
     artillery_test: {
       config,
-      before: (!isKafka && before) ? { flow: prepareFlow(before.steps) } : undefined,
+      // a before block alongside the kafka engine hangs artillery — http-only for now
+      before: (testEngine === 'http' && before) ? { flow: prepareFlow(before.steps) } : undefined,
       scenarios: scenariosRequest
     },
     csv_file_id: csvFileId,
@@ -86,17 +104,20 @@ export const createStateForEditTest = (test, cloneMode) => {
   test = cloneDeep(test);
   const { artillery_test } = test;
   const cfg = artillery_test.config || {};
-  const isKafka = !!(cfg.engines && cfg.engines.kafka);
-  const scenarios = testScenarioToTestScenario(artillery_test.scenarios, isKafka);
+  const hasKafkaEngine = !!(cfg.engines && cfg.engines.kafka);
+  const isMixed = hasKafkaEngine && (artillery_test.scenarios || []).some((s) => s.engine !== 'kafka');
+  const isKafka = hasKafkaEngine && !isMixed;
+  const scenarios = testScenarioToTestScenario(artillery_test.scenarios, isKafka, isMixed);
   const kafkaCfg = cfg.kafka || {};
   return {
     name: test.name,
     description: test.description,
     id: test.id,
     baseUrl: isKafka ? '' : cfg.target,
-    testEngine: isKafka ? 'kafka' : 'http',
+    testEngine: isMixed ? ENGINE_MIXED : (isKafka ? 'kafka' : 'http'),
     kafkaBrokers: (kafkaCfg.brokers || []).join(','),
-    kafkaConsumerGroup: (kafkaCfg.lagMonitor && kafkaCfg.lagMonitor.consumerGroup) || '',
+    kafkaMonitoredGroups: (kafkaCfg.lagMonitor && (kafkaCfg.lagMonitor.consumerGroups || (kafkaCfg.lagMonitor.consumerGroup ? [kafkaCfg.lagMonitor.consumerGroup] : []))) || [],
+    kafkaCustomGroup: '',
     kafkaTopics: [],
     kafkaConsumerGroups: [],
     before: testBeforeToStateBefore(artillery_test.before),
@@ -124,19 +145,21 @@ function testBeforeToStateBefore(before) {
   }
 }
 
-function testScenarioToTestScenario(testScenarios, isKafka) {
+function testScenarioToTestScenario(testScenarios, isKafka, isMixed) {
   if (!testScenarios) {
     return []
   }
   return testScenarios.map((scenario) => {
+    const scenarioIsKafka = isKafka || (isMixed && scenario.engine === 'kafka');
     return {
       id: uuid(),
       scenario_name: scenario.name,
+      engine: isMixed ? (scenarioIsKafka ? 'kafka' : 'http') : undefined,
       beforeScenario: scenario.beforeScenario,
       afterScenario: scenario.afterScenario,
       weight: scenario.weight,
       additionalInfo: { body: scenario.additionalInfo, isEnable: !!scenario.additionalInfo },
-      steps: isKafka ? buildKafkaStepsFromFlow(scenario.flow) : buildStepsFromFlow(scenario.flow)
+      steps: scenarioIsKafka ? buildKafkaStepsFromFlow(scenario.flow) : buildStepsFromFlow(scenario.flow)
     }
   })
 }

@@ -5,7 +5,7 @@ import * as Selectors from '../../redux/selectors/testsSelector';
 import * as ProcessorsSelector from '../../redux/selectors/processorsSelector';
 import { connect } from 'react-redux';
 import Modal from '../Modal';
-import { createTestRequest, createStateForEditTest, createDefaultExpectation, createDefaultCapture } from './utils';
+import { createTestRequest, createStateForEditTest, createDefaultExpectation, createDefaultCapture, ENGINE_MIXED } from './utils';
 import { v4 as uuid } from 'uuid';
 import { cloneDeep, reduce, isNumber } from 'lodash';
 import ErrorDialog from '../ErrorDialog';
@@ -31,6 +31,7 @@ import { EMPTY_STRING, INVALID_URL_MESSAGE } from '../../../constants';
 import InfoToolTip from "../InfoToolTip";
 import CustomDropdown from '../../../components/Dropdown/CustomDropdown';
 import Input from '../../../components/Input';
+import MultiSelect from '../../../components/MultiSelect/MultiSelect.export';
 
 const SLEEP = 'sleep';
 const MAX_PROBABILITY = 100;
@@ -47,9 +48,12 @@ export class TestForm extends React.Component {
         type: 'basic',
         testEngine: 'http',
         kafkaBrokers: '',
-        kafkaConsumerGroup: '',
+        kafkaMonitoredGroups: [],
+        kafkaCustomGroup: '',
         kafkaTopics: [],
         kafkaConsumerGroups: [],
+        kafkaStatus: 'idle', // idle | connecting | connected | error
+        kafkaStatusMessage: '',
         name: '',
         description: '',
         currentScenarioIndex: 0,
@@ -137,13 +141,14 @@ export class TestForm extends React.Component {
     }
 
     componentWillUnmount () {
+      clearTimeout(this.kafkaDiscoveryTimer);
       this.props.getFileMetadataSuccess(undefined);
     }
 
     componentDidMount () {
       this.props.getProcessors({ exclude: 'javascript' });
       this.props.initForm();
-      if (this.state.testEngine === 'kafka') {
+      if (this.state.testEngine !== 'http') {
         this.loadKafkaDiscovery();
       }
       if (this.state.editMode || this.props.cloneMode) {
@@ -163,7 +168,7 @@ export class TestForm extends React.Component {
 
     render () {
       const { createTestError, processorsError, closeDialog, processorsLoading, processorsList, csvMetadata } = this.props;
-      const { name, description, urls, baseUrl, processorId, editMode, maxSupportedScenariosUi, validationErrors, isFavorite, testEngine, kafkaBrokers, kafkaConsumerGroup, kafkaConsumerGroups } = this.state;
+      const { name, description, urls, baseUrl, processorId, editMode, maxSupportedScenariosUi, validationErrors, isFavorite, testEngine, kafkaBrokers, kafkaMonitoredGroups, kafkaCustomGroup, kafkaConsumerGroups, kafkaStatus, kafkaStatusMessage, kafkaTopics } = this.state;
       const error = createTestError || processorsError || maxSupportedScenariosUi;
       return (
         <Modal style={{ paddingTop: '12px', paddingBottom: '12px', paddingLeft: '40px', paddingRight: '40px' }}
@@ -195,11 +200,11 @@ export class TestForm extends React.Component {
                   </div>
                   <div className={style['input-container']}>
                     <TitleInput style={{ flex: '1', marginTop: '2px' }} title={'Test type'}>
-                      <CustomDropdown list={['http', 'kafka']} value={testEngine}
+                      <CustomDropdown list={['http', 'kafka', ENGINE_MIXED]} value={testEngine}
                         onChange={(value) => this.onChangeTestEngine(value)} placeHolder={'http'} />
                     </TitleInput>
                   </div>
-                  {testEngine === 'http' &&
+                  {testEngine !== 'kafka' &&
                   <div className={style['input-container']}>
                     <TitleInput style={{ flex: '1', marginTop: '2px' }} title={'Base url'}>
                       <ErrorWrapper errorText={validationErrors[URL_FIELDS.BASE].error}>
@@ -212,20 +217,18 @@ export class TestForm extends React.Component {
                       </ErrorWrapper>
                     </TitleInput>
                   </div>}
-                  {testEngine === 'kafka' &&
+                  {testEngine !== 'http' &&
                   <div className={style['input-container']}>
                     <TitleInput style={{ flex: '1', marginTop: '2px' }} title={'Kafka brokers'}>
                       <TextArea maxRows={2} value={kafkaBrokers} placeholder={'broker1:9092,broker2:9092'}
-                        onChange={(evt) => this.setState({ kafkaBrokers: evt.target.value })} />
+                        onChange={(evt) => this.onKafkaBrokersChange(evt.target.value)} />
                     </TitleInput>
+                    {this.renderKafkaStatus(kafkaStatus, kafkaStatusMessage, kafkaTopics, kafkaConsumerGroups)}
                   </div>}
-                  {testEngine === 'kafka' &&
+                  {testEngine !== 'http' &&
                   <div className={style['input-container']}>
-                    <TitleInput style={{ flex: '1', marginTop: '2px' }} title={'Monitor consumer group (lag)'}>
-                      <Input value={kafkaConsumerGroup}
-                        list={kafkaConsumerGroups}
-                        placeholder={'billing'}
-                        onChange={(evt) => this.setState({ kafkaConsumerGroup: evt.target.value })} />
+                    <TitleInput style={{ flex: '1', marginTop: '2px' }} title={'Monitor consumer groups (lag)'}>
+                      {this.renderMonitoredGroups(kafkaMonitoredGroups, kafkaConsumerGroups, kafkaCustomGroup)}
                     </TitleInput>
                   </div>}
                   <div className={style['input-container']}>
@@ -265,16 +268,112 @@ export class TestForm extends React.Component {
     };
 
     loadKafkaDiscovery = () => {
-      // Best-effort: the pickers are conveniences, so a discovery failure
-      // (kafka unconfigured/unreachable) must not block authoring.
-      getKafkaTopics().then((res) => this.setState({ kafkaTopics: res.data })).catch(() => {});
-      getKafkaConsumerGroups().then((res) => this.setState({ kafkaConsumerGroups: res.data })).catch(() => {});
+      // Discovery doubles as a connectivity check. When the user typed a broker
+      // address it checks THAT address; otherwise it falls back to predator's
+      // configured kafka_brokers. Failures never block authoring — you can
+      // still type a topic — but we surface why.
+      const brokers = (this.state.kafkaBrokers || '').trim() || undefined;
+      this.setState({ kafkaStatus: 'connecting', kafkaStatusMessage: '' });
+      getKafkaTopics(brokers)
+        .then((res) => this.setState({ kafkaTopics: res.data, kafkaStatus: 'connected' }))
+        .catch((err) => {
+          const data = err.response && err.response.data;
+          this.setState({
+            kafkaStatus: 'error',
+            kafkaTopics: [],
+            kafkaConsumerGroups: [],
+            kafkaStatusMessage: (data && data.message) || (brokers ? `Could not reach ${brokers}` : 'Could not reach Kafka. Check kafka_brokers in Settings.')
+          });
+        });
+      getKafkaConsumerGroups(brokers).then((res) => this.setState({ kafkaConsumerGroups: res.data })).catch(() => {});
+    };
+
+    onKafkaBrokersChange = (value) => {
+      this.setState({ kafkaBrokers: value });
+      clearTimeout(this.kafkaDiscoveryTimer);
+      this.kafkaDiscoveryTimer = setTimeout(this.loadKafkaDiscovery, 600);
+    };
+
+    addCustomGroup = () => {
+      const g = (this.state.kafkaCustomGroup || '').trim();
+      if (!g) return;
+      const set = new Set(this.state.kafkaMonitoredGroups);
+      set.add(g);
+      this.setState({ kafkaMonitoredGroups: [...set], kafkaCustomGroup: '' });
+    };
+
+    // Multi-select dropdown of discovered groups; groups not yet discovered can
+    // still be added by name below. Lag is reported per selected group.
+    renderMonitoredGroups = (selected, discovered, custom) => {
+      const allNames = [...new Set([...discovered, ...selected])];
+      const options = allNames.map((g) => ({ key: g, value: g }));
+      return (
+        <div>
+          <MultiSelect
+            options={options}
+            selectedOptions={options.filter((o) => selected.includes(o.key))}
+            onChange={(values) => this.setState({ kafkaMonitoredGroups: values.map((v) => v.key) })}
+            placeholder={discovered.length ? 'Select consumer groups' : 'No groups discovered — add one below'}
+            height={'35px'}
+            enableFilter
+            enableSelectAll
+          />
+          <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+            <Input value={custom} placeholder={'add a group by name'}
+              onChange={(evt) => this.setState({ kafkaCustomGroup: evt.target.value })}
+              onKeyDown={(evt) => { if (evt.key === 'Enter') { evt.preventDefault(); this.addCustomGroup(); } }} />
+          </div>
+        </div>
+      );
+    };
+
+    renderKafkaStatus = (status, message, topics, groups) => {
+      // Status is colour + glyph + label (never colour alone), the same rule the
+      // rest of the product follows. It reflects the broker typed above (or, if
+      // empty, predator's configured kafka_brokers) — the same cluster the topic
+      // and consumer-group pickers list.
+      const brokers = (this.state.kafkaBrokers || '').trim();
+      const base = { display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '6px', fontSize: 'var(--text-xs)' };
+      if (status === 'connecting') {
+        return <div style={{ ...base, color: 'var(--fg-secondary)' }}>connecting{brokers ? ` to ${brokers}` : ''}…</div>;
+      }
+      if (status === 'connected') {
+        return <div style={{ ...base, color: 'var(--held-fg)' }}
+          title={brokers ? `Connected to ${brokers} — topics and consumer groups below come from this cluster.` : 'Connected to Predator\'s configured Kafka broker (kafka_brokers in Settings). Type a broker above to check a different cluster.'}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--held-fg)' }} />
+          Connected — {topics.length} topic{topics.length === 1 ? '' : 's'}, {groups.length} group{groups.length === 1 ? '' : 's'}
+        </div>;
+      }
+      if (status === 'error') {
+        return <div style={{ ...base, color: 'var(--breach-fg)' }} title={message}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--breach-fg)' }} />
+          {brokers ? `Could not connect to ${brokers}` : 'Not connected'} — you can still type a topic below
+        </div>;
+      }
+      return null;
     };
 
     onChangeTestEngine = (value) => {
       this.setState({ testEngine: value }, () => {
-        if (value === 'kafka') this.loadKafkaDiscovery();
+        if (value !== 'http') this.loadKafkaDiscovery();
       });
+    };
+
+    // The engine a scenario's steps run under. Only mixed tests carry it per
+    // scenario; pure tests derive it from the test type.
+    scenarioEngine = (scenario) => {
+      if (this.state.testEngine === 'kafka') return 'kafka';
+      if (this.state.testEngine === ENGINE_MIXED) return scenario.engine || 'http';
+      return 'http';
+    };
+
+    onChangeScenarioEngine = (index, engine) => {
+      const { scenarios } = this.state;
+      if (scenarios[index].engine === engine) return;
+      scenarios[index].engine = engine;
+      // steps are engine-specific (produce vs http request) — start the flow over
+      scenarios[index].steps = [this.initStepForEngine(engine)];
+      this.setState({ scenarios });
     };
 
     onProcessorChosen = (id) => {
@@ -321,6 +420,7 @@ export class TestForm extends React.Component {
         id: scenarioId,
         steps: [],
         weight: maxWeight,
+        engine: this.state.testEngine === ENGINE_MIXED ? 'http' : undefined,
         scenario_name: 'Scenario ' + (scenarios.length + 1),
         additionalInfo: { isEnable: false }
       });
@@ -364,7 +464,14 @@ export class TestForm extends React.Component {
       if (type === SLEEP) {
         return { id: uuid(), sleep: 10, type };
       }
-      if (this.state.testEngine === 'kafka') {
+      const { scenarios, currentScenarioIndex } = this.state;
+      const scenario = currentScenarioIndex !== null && scenarios[currentScenarioIndex];
+      const engine = scenario ? this.scenarioEngine(scenario) : 'http';
+      return this.initStepForEngine(engine);
+    }
+
+    initStepForEngine (engine) {
+      if (engine === 'kafka') {
         return { id: uuid(), engine: 'kafka', topic: '', key: '', message: {} };
       }
       return {
@@ -510,7 +617,8 @@ export class TestForm extends React.Component {
             <div className={style['actions-style']} onClick={this.addScenarioHandler}>+Add Scenario</div>
             <div className={style['actions-style']} onClick={this.addStepHandler}>+Add Step</div>
             <div className={style['actions-style']} onClick={() => this.addStepHandler(SLEEP)}>+Add Sleep</div>
-            <div className={style['actions-style']} onClick={this.addBeforeHandler}>+Add Before</div>
+            {this.state.testEngine === 'http' &&
+            <div className={style['actions-style']} onClick={this.addBeforeHandler}>+Add Before</div>}
             <div className={style['actions-style']}
               onClick={() => this.setState({ csvMode: true })}>{(csvFile || csvMetadata) ? 'Modify' : '+Add'} CSV
             </div>
@@ -532,6 +640,16 @@ export class TestForm extends React.Component {
                   }} tab={tabData.scenario_name || 'Scenario'}
                     key={tabData.id}>
                     {
+                      !tabData.isBefore && this.state.testEngine === ENGINE_MIXED &&
+                      <div style={{ width: '80%', marginBottom: '8px' }}>
+                        <TitleInput title={'Scenario engine'} style={{ maxWidth: '220px' }}>
+                          <CustomDropdown list={['http', 'kafka']} value={this.scenarioEngine(tabData)}
+                            onChange={(value) => this.onChangeScenarioEngine(index - (this.state.before ? 1 : 0), value)}
+                            placeHolder={'http'} />
+                        </TitleInput>
+                      </div>
+                    }
+                    {
                       !tabData.isBefore &&
                       <div style={{ width: '80%' }}>
 
@@ -550,7 +668,7 @@ export class TestForm extends React.Component {
                       <StepsList
                         steps={tabData.steps}
                         editMode={editMode}
-                        testEngine={this.state.testEngine}
+                        testEngine={tabData.isBefore ? 'http' : this.scenarioEngine(tabData)}
                         kafkaTopics={this.state.kafkaTopics}
                         onChangeValueOfStep={this.onChangeValueOfStep}
                         processorsExportedFunctions={processorsExportedFunctions}
