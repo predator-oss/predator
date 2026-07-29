@@ -76,7 +76,7 @@ To see the progress of `v1.5.0` [click here](https://github.com/predator-oss/pre
 Predator is production ready and fully tested and can be deployed in all of the following platforms listed. Please follow these guidelines when deploying Predator:
 1. Deploy Predator using only tagged releases and not `latest`.
 2. Predator-Runner docker image version (`ghcr.io/predator-oss/predator-runner:$TAGGED_VERSION`) must match the Predator's `major.minor` version running in order to be fully compatible with all features. Patched versions don't have to match, but it is recommended to use latest patch version.
-    - For example, Predator version 1.6 (`ghcr.io/predator-oss/predator:1.8`) should run Predator-Runner version 1.6 as well (`ghcr.io/predator-oss/predator-runner:1.6`). 
+    - For example, Predator 1.8.x (`ghcr.io/predator-oss/predator:1.8`) runs Predator-Runner 1.8.x (`ghcr.io/predator-oss/predator-runner:1.8`).
 3. For notes on which version to deploy, read our [versioning](#versioning) section.
 
 ### Kubernetes

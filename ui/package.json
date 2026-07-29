@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Zooz/predator.git"
+    "url": "git+https://github.com/predator-oss/predator.git"
   },
   "author": "",
   "license": "ISC",
@@ -95,5 +95,6 @@
     "react-tooltip": {
       "uuid": "$uuid"
     }
-  }
+  },
+  "homepage": "https://github.com/predator-oss/predator#readme"
 }
