@@ -1,5 +1,6 @@
 packages:
   - 'ui'
+  - 'mcp'
 
 overrides:
   "lodash": "$lodash"
