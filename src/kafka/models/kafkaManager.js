@@ -5,8 +5,8 @@ const configHandler = require('../../configManager/models/configHandler');
 const { CONFIG } = require('../../common/consts');
 const generateError = require('../../common/generateError');
 
-async function buildClient () {
-    const brokers = await configHandler.getConfigValue(CONFIG.KAFKA_BROKERS);
+async function buildClient (brokersOverride) {
+    const brokers = brokersOverride || await configHandler.getConfigValue(CONFIG.KAFKA_BROKERS);
     if (!brokers) {
         throw generateError(422, 'Kafka is not configured. Set kafka_brokers in the configuration.');
     }
@@ -26,8 +26,8 @@ async function buildClient () {
     });
 }
 
-async function withAdmin (fn) {
-    const kafka = await buildClient();
+async function withAdmin (fn, brokersOverride) {
+    const kafka = await buildClient(brokersOverride);
     const admin = kafka.admin();
     try {
         await admin.connect();
@@ -42,12 +42,12 @@ async function withAdmin (fn) {
     }
 }
 
-module.exports.getTopics = () => withAdmin(async (admin) => {
+module.exports.getTopics = (brokers) => withAdmin(async (admin) => {
     const topics = await admin.listTopics();
     return topics.filter(t => !t.startsWith('__')).sort();
-});
+}, brokers);
 
-module.exports.getConsumerGroups = () => withAdmin(async (admin) => {
+module.exports.getConsumerGroups = (brokers) => withAdmin(async (admin) => {
     const { groups } = await admin.listGroups();
     return groups.map(g => g.groupId).sort();
-});
+}, brokers);

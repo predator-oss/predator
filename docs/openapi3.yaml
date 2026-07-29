@@ -1309,6 +1309,13 @@ paths:
       tags:
         - Kafka
       summary: List topics in the configured Kafka cluster
+      parameters:
+        - in: query
+          name: brokers
+          required: false
+          description: Comma-separated broker list overriding the configured kafka_brokers
+          schema:
+            type: string
       responses:
         '200':
           description: Topic names
@@ -1327,6 +1334,13 @@ paths:
       tags:
         - Kafka
       summary: List consumer groups in the configured Kafka cluster
+      parameters:
+        - in: query
+          name: brokers
+          required: false
+          description: Comma-separated broker list overriding the configured kafka_brokers
+          schema:
+            type: string
       responses:
         '200':
           description: Consumer group ids

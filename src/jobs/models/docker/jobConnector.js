@@ -19,16 +19,25 @@ if (dockerConfig.host) {
 const docker = new Docker(dockerConnection);
 
 const pullImage = async (dockerImage) => {
-    const dockerImageStream = await docker.pull(dockerImage);
-    return new Promise((resolve, reject) => {
-        docker.modem.followProgress(dockerImageStream, (err) => {
-            if (!err) {
-                return resolve();
-            } else {
-                return reject(err);
-            }
+    try {
+        const dockerImageStream = await docker.pull(dockerImage);
+        await new Promise((resolve, reject) => {
+            docker.modem.followProgress(dockerImageStream, (err) => {
+                if (!err) {
+                    return resolve();
+                } else {
+                    return reject(err);
+                }
+            });
         });
-    });
+    } catch (pullError) {
+        // unpullable image (e.g. built locally) — run it if it exists locally
+        try {
+            await docker.getImage(dockerImage).inspect();
+        } catch (e) {
+            throw pullError;
+        }
+    }
 };
 
 module.exports.runJob = async (dockerJobConfig) => {

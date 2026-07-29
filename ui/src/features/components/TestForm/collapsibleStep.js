@@ -73,6 +73,9 @@ export default class CollapsibleStep extends React.Component {
       if (step.type === SLEEP) {
         return `SLEEP ${step.sleep} SECONDS`
       }
+      if (step.engine === 'kafka') {
+        return `PRODUCE ${step.topic || ''}`
+      }
       return `${step.method} ${step.url}`
     };
 

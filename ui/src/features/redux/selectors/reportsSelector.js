@@ -96,6 +96,7 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
   return reports.map((report) => {
     const latencyGraph = [];
     const consumerLagGraph = [];
+    const consumerLagPartitionsGraph = [];
     const errorsCodeGraph = [];
     const errorsGraph = [];
     const errors = {};
@@ -105,6 +106,8 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
     const benchMark = {};
     const assertionsTable = { rows: [], headers: [] };
     let errorsCodeGraphKeysAsObjectAcc = {};
+    const consumerLagGroupsAcc = {};
+    const consumerLagPartitionsAcc = {};
 
     const offset = startFromZeroTime ? new Date(report.start_time).getTime() : 0;
 
@@ -134,15 +137,31 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
           ...lastBenchmark.rps
         });
 
-        const lag = bucket.summaries && bucket.summaries['kafka.consumer_lag_total'];
-        if (lag) {
-          consumerLagGraph.push({
-            name: buildDateFormat(time),
-            timeMills,
-            [`${prefix}median`]: lag.median,
-            [`${prefix}p95`]: lag.p95,
-            [`${prefix}max`]: lag.max
+        const summaries = bucket.summaries || {};
+        const lagKeys = Object.keys(summaries).filter((k) => k.indexOf('kafka.consumer_lag_total') === 0);
+        if (lagKeys.length) {
+          const point = { name: buildDateFormat(time), timeMills };
+          lagKeys.forEach((k) => {
+            // key is 'kafka.consumer_lag_total' or 'kafka.consumer_lag_total.<group>'
+            const group = k.slice('kafka.consumer_lag_total'.length).replace(/^\./, '') || 'lag';
+            point[`${prefix}${group}`] = summaries[k].max;
+            consumerLagGroupsAcc[`${prefix}${group}`] = true;
           });
+          consumerLagGraph.push(point);
+        }
+
+        const partitionKeys = Object.keys(summaries).filter((k) => k.indexOf('kafka.consumer_lag_partition.') === 0);
+        if (partitionKeys.length) {
+          const point = { name: buildDateFormat(time), timeMills };
+          partitionKeys.forEach((k) => {
+            // key is 'kafka.consumer_lag_partition.<group>.<topic>.<partition>'
+            const rest = k.slice('kafka.consumer_lag_partition.'.length);
+            const lastDot = rest.lastIndexOf('.');
+            const series = `${prefix}${rest.slice(0, lastDot)}[${rest.slice(lastDot + 1)}]`;
+            point[series] = summaries[k].max;
+            consumerLagPartitionsAcc[series] = true;
+          });
+          consumerLagPartitionsGraph.push(point);
         }
 
         const errorsData = buildErrorDataObject(bucket, prefix);
@@ -154,7 +173,10 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
         });
       });
     }
-    addStartEndTimeToGraphs(consumerLagGraph.length ? [latencyGraph, rps, errorsCodeGraph, consumerLagGraph] : [latencyGraph, rps, errorsCodeGraph], startDate, endDate);
+    const graphsToPad = [latencyGraph, rps, errorsCodeGraph];
+    if (consumerLagGraph.length) graphsToPad.push(consumerLagGraph);
+    if (consumerLagPartitionsGraph.length) graphsToPad.push(consumerLagPartitionsGraph);
+    addStartEndTimeToGraphs(graphsToPad, startDate, endDate);
 
     // aggregate data
     buildErrorBars(errorsBar, report.aggregate, lastBenchmark, prefix);
@@ -191,8 +213,10 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
       rpsKeys.push(...lastBenchmark.rpsKeys);
       errorsBarKeys.push('benchmark_count');
     }
-    const consumerLagGraphKeys = [`${prefix}median`, `${prefix}p95`, `${prefix}max`];
+    const consumerLagGraphKeys = Object.keys(consumerLagGroupsAcc);
     const consumerLagGraphMax = findMaxY(consumerLagGraph, consumerLagGraphKeys);
+    const consumerLagPartitionsGraphKeys = Object.keys(consumerLagPartitionsAcc).sort();
+    const consumerLagPartitionsGraphMax = findMaxY(consumerLagPartitionsGraph, consumerLagPartitionsGraphKeys);
     const latencyGraphMax = findMaxY(latencyGraph, latencyGraphKeys);
     const rpsGraphMax = findMaxY(rps, rpsKeys);
     const errorsGraphMax = findMaxY(errorsCodeGraph, errorsCodeGraphKeys);
@@ -205,6 +229,9 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
       consumerLagGraph,
       consumerLagGraphKeys,
       consumerLagGraphMax,
+      consumerLagPartitionsGraph,
+      consumerLagPartitionsGraphKeys,
+      consumerLagPartitionsGraphMax,
       rpsGraphMax,
       errorsCodeGraph,
       errorsCodeGraphKeys,
