@@ -27,7 +27,8 @@ jobs:
       - run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-      - run: npx standard-version ${{ inputs.release_as && format('--release-as {0}', inputs.release_as) || '' }}
+      - uses: pnpm/action-setup@v4
+      - run: pnpm dlx standard-version ${{ inputs.release_as && format('--release-as {0}', inputs.release_as) || '' }}
       - run: git push --follow-tags origin main
       - id: tag
         run: echo "tag=v$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
