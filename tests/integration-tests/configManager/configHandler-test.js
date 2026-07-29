@@ -25,12 +25,6 @@ const defaultBody = {
     }
 };
 const updateBodyWithTypes = {
-    influx_metrics: {
-        host: 'string_value',
-        username: 'string_value',
-        password: 'string_value',
-        database: 'string_value'
-    },
     prometheus_metrics: {
         push_gateway_url: 'string_value',
         buckets_sizes: [0.01, 0.05, 0.10, 0.25, 0.50, 0.100, 0.200, 0.300, 0.400, 0.500, 1, 2, 5, 10, 30, 60, 120],
@@ -68,12 +62,6 @@ const requestBody = {
     runner_memory: 256,
     metrics_plugin_name: 'prometheus',
     default_email_address: 'string_value_default_email_address',
-    influx_metrics: {
-        host: 'string_value_influx_metrics',
-        username: 'string_value_username',
-        password: 'string_value_password',
-        database: 'string_value_database'
-    },
     prometheus_metrics: {
         push_gateway_url: 'string_value_push_gateway_url',
         buckets_sizes: [0.01, 0.05, 0.10, 0.25, 0.50, 0.100, 0.200, 0.300, 0.400, 0.500, 1, 2, 5, 10, 30, 60, 120],
@@ -100,9 +88,8 @@ const requestBody = {
 const requestBodyNotValidEnum = { metrics_plugin_name: 'not enum' };
 const requestBodyNotValidType = { runner_cpu: 'not_int' };
 const requestBodyNotValidRequire = {
-    influx_metrics: {
-        host: 'string_value',
-        username: 'string_value'
+    prometheus_metrics: {
+        labels: { key1: 'value' }
     }
 };
 
@@ -143,7 +130,6 @@ describe('update and get config', () => {
         it('get all config with special types', async () => {
             const response = await configRequestCreator.updateConfig(updateBodyWithTypes);
             should(response.statusCode).eql(200);
-            should(response.body.influx_metrics instanceof Object);
             should(response.body.prometheus_metrics instanceof Object);
             should(response.body.smtp_server instanceof Object);
             should(response.body.smtp_server instanceof Number);

@@ -202,7 +202,7 @@ class Form extends React.Component {
                         floatingLabelText: 'Metrics plugin name',
                         info: 'insert info',
                         type: INPUT_TYPES.DROPDOWN,
-                        options: ['influx', 'prometheus'],
+                        options: ['prometheus'],
                         default: 'None'
                     },
                     {
@@ -212,40 +212,6 @@ class Form extends React.Component {
                         info: 'Url of push gateway',
                         inheritFromServerKeyObject: 'prometheus_metrics',
                         isHidden: (state) => isMetricsDropdownHidden(state, 'prometheus')
-                    },
-                    {
-                        name: 'host',
-                        key: 'influx_metrics.host',
-                        floatingLabelText: 'Influx host',
-                        info: 'Influx db host',
-                        inheritFromServerKeyObject: 'influx_metrics',
-                        isHidden: (state) => isMetricsDropdownHidden(state, 'influx')
-
-                    },
-                    {
-                        name: 'username',
-                        key: 'influx_metrics.username',
-                        floatingLabelText: 'Influx username',
-                        info: 'Influx db username',
-                        inheritFromServerKeyObject: 'influx_metrics',
-                        isHidden: (state) => isMetricsDropdownHidden(state, 'influx')
-                    },
-                    {
-                        name: 'password',
-                        key: 'influx_metrics.password',
-                        floatingLabelText: 'Influx password',
-                        info: 'Influx db password',
-                        inheritFromServerKeyObject: 'influx_metrics',
-                        secret: true,
-                        isHidden: (state) => isMetricsDropdownHidden(state, 'influx')
-                    },
-                    {
-                        name: 'database',
-                        key: 'influx_metrics.database',
-                        floatingLabelText: 'Influx database',
-                        info: 'Influx db name',
-                        inheritFromServerKeyObject: 'influx_metrics',
-                        isHidden: (state) => isMetricsDropdownHidden(state, 'influx')
                     },
                 ]
             }

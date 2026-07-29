@@ -126,7 +126,7 @@ you must restart Predator with the new <u>[configuration](configuration.md#datab
 
 ### <b>Does Predator support exporting metrics to external time series databases?</b>
 
-Yes, Predator has integration with both <u>[Prometheus](https://prometheus.io)</u> and <u>[InfluxDB](https://www.influxdata.com/)</u>, and can export metrics by test endpoints and status codes, something that is currently is not available to configure in the Predator UI, but is supported through the API.
+Yes, Predator has integration with <u>[Prometheus](https://prometheus.io)</u>, and can export metrics by test endpoints and status codes, something that is currently is not available to configure in the Predator UI, but is supported through the API.
 
 ### <b>How can I export metrics to Prometheus?</b>
 

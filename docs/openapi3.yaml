@@ -2927,7 +2927,6 @@ components:
         metrics_plugin_name:
           type: string
           enum:
-            - influx
             - prometheus
           description: Metrics to use, in case one or both metrics are configured.
         default_email_address:
@@ -2948,28 +2947,6 @@ components:
             Delay before the runners will start the test, useful for enviroments
             like kubernetes with sidecars that should be initialized before the
             runner starts
-        influx_metrics:
-          additionalProperties: false
-          type: object
-          description: Influx configuration  .
-          required:
-            - host
-            - username
-            - password
-            - database
-          properties:
-            host:
-              type: string
-              description: Influx host.
-            username:
-              type: string
-              description: User name to influx.
-            password:
-              type: string
-              description: Password name to influx.
-            database:
-              type: string
-              description: Influx db name.
         prometheus_metrics:
           additionalProperties: false
           type: object
