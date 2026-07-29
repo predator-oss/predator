@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.8.2](https://github.com/Zooz/predator/compare/v1.8.1...v1.8.2) (2026-07-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* drop influx metrics export (#5)
+
+### Features
+
+* drop influx metrics export ([#5](https://github.com/Zooz/predator/issues/5)) ([0b77a62](https://github.com/Zooz/predator/commit/0b77a62253950049960be8e89c5af75a55e57eff))
+
 ### [1.8.1](https://github.com/Zooz/predator/compare/v1.8.0...v1.8.1) (2026-07-29)
 
 
