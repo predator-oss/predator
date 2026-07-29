@@ -51,7 +51,12 @@ const configDataMap = {
     [constConfig.CHAOS_MESH_ENABLED]: {
         value: process.env.CHAOS_MESH_ENABLED || false,
         type: 'boolean'
-    }
+    },
+    [constConfig.KAFKA_BROKERS]: { value: process.env.KAFKA_BROKERS },
+    [constConfig.KAFKA_SSL]: { value: process.env.KAFKA_SSL, type: 'boolean' },
+    [constConfig.KAFKA_SASL_MECHANISM]: { value: process.env.KAFKA_SASL_MECHANISM },
+    [constConfig.KAFKA_SASL_USERNAME]: { value: process.env.KAFKA_SASL_USERNAME },
+    [constConfig.KAFKA_SASL_PASSWORD]: { value: process.env.KAFKA_SASL_PASSWORD }
 };
 
 module.exports.getConstType = (configValue) => {

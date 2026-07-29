@@ -96,7 +96,12 @@ module.exports = {
         BENCHMARK_WEIGHTS: 'benchmark_weights',
         CUSTOM_RUNNER_DEFINITION: 'custom_runner_definition',
         STREAMING_EXCLUDED_ATTRIBUTES: 'streaming_excluded_attributes',
-        CHAOS_MESH_ENABLED: 'chaos_mesh_enabled'
+        CHAOS_MESH_ENABLED: 'chaos_mesh_enabled',
+        KAFKA_BROKERS: 'kafka_brokers',
+        KAFKA_SSL: 'kafka_ssl',
+        KAFKA_SASL_MECHANISM: 'kafka_sasl_mechanism',
+        KAFKA_SASL_USERNAME: 'kafka_sasl_username',
+        KAFKA_SASL_PASSWORD: 'kafka_sasl_password'
     },
     PREDATOR_RUNNER_PREFIX,
     CHAOS_EXPERIMENT_LABELS
