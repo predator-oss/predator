@@ -84,7 +84,11 @@ export class TestForm extends React.Component {
     };
 
     isButtonDisabled = () => {
-      return !this.state.name || this.hasValidationErrors();
+      const { name, testEngine, baseUrl, scenarios } = this.state;
+      // http scenarios use relative urls, so they need a base url to resolve against
+      const needsBaseUrl = testEngine === 'http' ||
+        (testEngine === ENGINE_MIXED && scenarios.some((s) => this.scenarioEngine(s) === 'http'));
+      return !name || this.hasValidationErrors() || (needsBaseUrl && !(baseUrl || '').trim());
     }
 
     updateValidationError = ({ error }) => {

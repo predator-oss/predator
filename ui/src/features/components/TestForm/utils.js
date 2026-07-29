@@ -47,7 +47,9 @@ export const createTestRequest = (data) => {
     };
   } else if (isMixed) {
     config = {
-      target: baseUrl,
+      // artillery refuses to start with no target at all — a mixed test with
+      // only kafka scenarios and no base url still needs one
+      target: baseUrl || `kafka://${brokers.join(',')}`,
       engines: { kafka: {} },
       kafka: kafkaBlock,
       plugins: { expect: {} }
