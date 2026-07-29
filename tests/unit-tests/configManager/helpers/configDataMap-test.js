@@ -19,7 +19,6 @@ const expectedTypes = {
     minimum_wait_for_delayed_report_status_update_in_ms: 'int',
     metrics_plugin_name: 'string',
     default_email_address: undefined,
-    influx_metrics: 'json',
     prometheus_metrics: 'json',
     smtp_server: 'json',
     delay_runner_ms: 'int',
