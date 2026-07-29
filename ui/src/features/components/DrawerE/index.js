@@ -8,8 +8,7 @@ import {
   faChevronRight,
   faChevronDown,
   faMoon,
-  faSun,
-  faComments
+  faSun
 } from '@fortawesome/free-solid-svg-icons'
 
 import style from './style.scss'
@@ -20,7 +19,6 @@ import { VERSION } from '../../../App/common/env'
 const THEME_KEY = 'predator-theme'
 const COLLAPSE_KEY = 'predator-rail-collapsed'
 const MOBILE_QUERY = '(max-width: 900px)'
-const FEEDBACK_URL = 'https://docs.google.com/forms/d/15dozkkA2xBUV7T7ls5XMyBj-JDg5Tj-TXNMp9PkdFsM/viewform?edit_requested=true'
 
 const readStored = (key) => {
   try {
@@ -194,15 +192,6 @@ class DrawerE extends Component {
 
           <div className={style.foot}>
             <span className={style.foot__version}>v{VERSION}</span>
-            <button
-              type='button'
-              className={style['chrome-button']}
-              aria-label='Send feedback'
-              title='Send feedback'
-              onClick={() => window.open(FEEDBACK_URL, '_blank', 'noopener,noreferrer')}
-            >
-              <FontAwesomeIcon icon={faComments} />
-            </button>
             <button
               type='button'
               className={style['chrome-button']}

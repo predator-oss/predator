@@ -5,6 +5,9 @@ FROM node:24-slim AS builder
 RUN mkdir -p /usr/ui
 
 COPY /ui /usr/ui
+# The UI shows the release version from the ROOT package.json — ui/package.json
+# has its own stale version that never tracked releases.
+COPY package.json /usr/release-package.json
 
 WORKDIR /usr/ui
 
@@ -15,7 +18,7 @@ ENV NODE_ENV=production
 ARG BUCKET_PATH
 ARG PREDATOR_DOCS_URL
 
-RUN VERSION=$(node -p -e "require('./package.json').version") && BUCKET_PATH=$BUCKET_PATH PREDATOR_DOCS_URL=$PREDATOR_DOCS_URL VERSION=$VERSION npm run build
+RUN VERSION=$(node -p -e "require('/usr/release-package.json').version") && BUCKET_PATH=$BUCKET_PATH PREDATOR_DOCS_URL=$PREDATOR_DOCS_URL VERSION=$VERSION npm run build
 
 # Server dependencies build in the full image (toolchain preinstalled) because
 # sqlite3 must compile from source: its arm64 prebuilt binary links a newer
