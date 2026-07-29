@@ -15,16 +15,16 @@ send to `POST /v1/tests/:test_id/reports/:report_id/stats`.
 ## Commands
 
 ```bash
-npm start                     # run the server (needs a DB; see Configuration)
-npm run start-local           # same, loading .env via dotenv
-npm run lint                  # eslint (flat config, see eslint.config.js)
-npm run unit-tests            # mocha + c8 coverage gate
-npm run local-integration-tests   # spins up DBs in docker, runs every db/platform combo
-npm test                      # lint + unit tests + local integration tests
-npm run setup-local-env       # interactive .env generator (setup-env.js)
+pnpm start                    # run the server (needs a DB; see Configuration)
+pnpm run start-local           # same, loading .env via dotenv
+pnpm run lint                 # eslint (flat config, see eslint.config.js)
+pnpm run unit-tests           # mocha + c8 coverage gate
+pnpm run local-integration-tests  # spins up DBs in docker, runs every db/platform combo
+pnpm test                     # lint + unit tests + local integration tests
+pnpm run setup-local-env      # interactive .env generator (setup-env.js)
 
-cd ui && npm run build        # webpack production build into ui/dist
-cd ui && npm start            # webpack dev server on :8080
+pnpm --filter predator-ui run build   # webpack production build into ui/dist
+pnpm --filter predator-ui start       # webpack dev server on :8080
 cd ui && npx tsc --noEmit -p tsconfig.json   # typecheck (no npm script for this)
 ```
 
@@ -137,7 +137,7 @@ Things that will bite you, all of which cost time to rediscover:
   therefore held at `^0.44.0` to match what `@uiw/react-monacoeditor` depends on. Before bumping
   monaco, check `find ui/node_modules -name monaco-editor -maxdepth 3` returns one path.
 - `package.json` `overrides` blocks (root and `ui/`) pin patched transitive versions. Removing them
-  reintroduces known advisories; check `npm audit --omit=dev` before touching them.
+  reintroduces known advisories; check `pnpm audit --prod` before touching them.
 
 ## UI design system
 

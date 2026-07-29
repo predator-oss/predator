@@ -10,27 +10,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run unit-tests
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run lint
+      - run: pnpm run unit-tests
 
   ui-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-          cache: npm
-          cache-dependency-path: ui/package-lock.json
-      - run: npm ci
-        working-directory: ui
-      - run: npm run build
-        working-directory: ui
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter predator-ui run build
 
   integration:
     # Same five database/platform combos the project has always gated on,
@@ -53,11 +52,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-          cache: npm
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - run: ./tests/integration-tests/run.sh
         env:
           LOCAL_TEST: 'true'

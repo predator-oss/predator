@@ -1,46 +1,49 @@
-# NODE container which runs this service.
-# node:24-slim publishes linux/amd64 and linux/arm64, so this builds unchanged on both.
+# pnpm workspace build: the UI compiles in the full builder image, server
+# dependencies install in their own stage, and the slim runtime gets only
+# built output and production node_modules.
 FROM node:24-slim AS builder
 
-RUN mkdir -p /usr/ui
+RUN corepack enable
 
-COPY /ui /usr/ui
-# The UI shows the release version from the ROOT package.json — ui/package.json
-# has its own stale version that never tracked releases.
-COPY package.json /usr/release-package.json
+WORKDIR /usr/app
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY ui/package.json ui/
+RUN pnpm install --filter predator-ui --frozen-lockfile
 
-WORKDIR /usr/ui
-
-# Build UI from sources
-RUN npm ci --silent
+COPY ui ./ui
 
 ENV NODE_ENV=production
 ARG BUCKET_PATH
 ARG PREDATOR_DOCS_URL
 
-RUN VERSION=$(node -p -e "require('/usr/release-package.json').version") && BUCKET_PATH=$BUCKET_PATH PREDATOR_DOCS_URL=$PREDATOR_DOCS_URL VERSION=$VERSION npm run build
+# The UI shows the release version from the ROOT package.json — ui/package.json
+# has its own stale version that never tracked releases.
+RUN VERSION=$(node -p -e "require('/usr/app/package.json').version") && \
+    BUCKET_PATH=$BUCKET_PATH PREDATOR_DOCS_URL=$PREDATOR_DOCS_URL VERSION=$VERSION \
+    pnpm --filter predator-ui run build
 
 # Server dependencies build in the full image (toolchain preinstalled) because
 # sqlite3 must compile from source: its arm64 prebuilt binary links a newer
 # glibc than node:24-slim ships, crashing at boot with ERR_DLOPEN_FAILED.
 FROM node:24 AS server-deps
 
-WORKDIR /usr
-COPY package*.json /usr/
-RUN npm ci --omit=dev --silent --build-from-source=sqlite3
+RUN corepack enable
+
+WORKDIR /usr/app
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY ui/package.json ui/
+RUN npm_config_build_from_source=true pnpm install --filter predator --prod --frozen-lockfile
 
 FROM node:24-slim AS production
 
-RUN mkdir -p /usr/src
-
+# WORKDIR stays /usr: the documented sqlite volume mount (-v ...:/usr/db with
+# SQLITE_STORAGE=db/predator) and static paths are relative to it.
 WORKDIR /usr
 
-# Install app dependencies, built in the full node image below.
-COPY package*.json /usr/
-COPY --from=server-deps /usr/node_modules /usr/node_modules
-## Bundle app source
-COPY /src /usr/src
-COPY /docs /usr/docs
-COPY --from=builder /usr/ui/dist /usr/ui/dist
+COPY package.json ./
+COPY --from=server-deps /usr/app/node_modules ./node_modules
+COPY /src ./src
+COPY /docs ./docs
+COPY --from=builder /usr/app/ui/dist ./ui/dist
 
 CMD ["node", "--max_old_space_size=512", "./src/server.js" ]
