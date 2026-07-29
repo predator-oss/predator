@@ -244,7 +244,9 @@ async function createJobRequest(jobId, reportId, jobBody, dockerImage, configDat
         maxVirtualUsersPerRunner = Math.ceil(jobBody.max_virtual_users / parallelism);
     }
 
-    let metricsExport = configData.metrics_plugin_name === 'influx' ? configData.influx_metrics : configData.prometheus_metrics;
+    // Influx export was dropped with the artillery v2 runner; prometheus is
+    // the only supported exporter.
+    let metricsExport = configData.metrics_plugin_name === 'prometheus' ? configData.prometheus_metrics : undefined;
 
     if (configData.metrics_plugin_name && metricsExport) {
         environmentVariables.METRICS_PLUGIN_NAME = configData.metrics_plugin_name;

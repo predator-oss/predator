@@ -28,7 +28,6 @@ const configDataMap = {
     },
     [constConfig.METRICS_PLUGIN_NAME]: { value: process.env.METRICS_PLUGIN_NAME, type: 'string' },
     [constConfig.PROMETHEUS_METRICS]: { value: process.env.METRICS_EXPORT_CONFIG, type: 'json' },
-    [constConfig.INFLUX_METRICS]: { value: process.env.METRICS_EXPORT_CONFIG, type: 'json' },
     [constConfig.SMTP_SERVER]: {
         value: JSON.stringify({
             from: process.env.SMTP_FROM,

@@ -89,7 +89,6 @@ module.exports = {
         METRICS_PLUGIN_NAME: 'metrics_plugin_name',
         DEFAULT_EMAIL_ADDRESS: 'default_email_address',
         DEFAULT_WEBHOOK_URL: 'default_webhook_url',
-        INFLUX_METRICS: 'influx_metrics',
         PROMETHEUS_METRICS: 'prometheus_metrics',
         SMTP_SERVER: 'smtp_server',
         BENCHMARK_THRESHOLD: 'benchmark_threshold',

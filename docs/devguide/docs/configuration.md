@@ -94,7 +94,7 @@ Applicable when STREAMING_PLATFORM = Kafka
 ## Metrics
 | PROCESS.ENV Variable 	| Configuration key   	| Description                                    	| Configurable from UI/API 	| Default value 	|
 |----------------------	|---------------------	|------------------------------------------------	|--------------------------	|---------------	|
-| METRICS_PLUGIN_NAME  	| metrics_plugin_name 	| Metrics integration to use [prometheus,influx] 	| ✓                        	|               	|
+| METRICS_PLUGIN_NAME  	| metrics_plugin_name 	| Metrics integration to use [prometheus] 	| ✓                        	|               	|
 
 #### Prometheus
 | Environment Variable 	| Configuration key                   	| Description                          	            | Configurable from UI/API 	| Default value 	|
@@ -106,10 +106,6 @@ Applicable when STREAMING_PLATFORM = Kafka
 #### InfluxDB
 | Environment Variable 	| Configuration key       	| Description        	| Configurable from UI/API 	| Default value 	|
 |----------------------	|-------------------------	|--------------------	|--------------------------	|---------------	|
-|                      	| influx_metrics.host     	| Influx db host     	| ✓                        	|               	|
-|                      	| influx_metrics.username 	| Influx db username 	| ✓                        	|               	|
-|                      	| influx_metrics.password 	| Influx db password 	| ✓                        	|               	|
-|                      	| influx_metrics.database 	| Influx db name     	| ✓                        	|               	|
 
 ## SMTP Server
 | Environment Variable 	| Configuration key    	| Description                                               	| Configurable from UI/API 	| Default value 	|

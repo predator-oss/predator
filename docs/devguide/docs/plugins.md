@@ -34,6 +34,5 @@ A dashboard for Grafana can be found [here](https://grafana.com/grafana/dashboar
 
 ## InfluxDB
 
-Set up a connection to your InfluxDB to receive test run metrics. Please refer to <u>[configuration section](configuration.md#influxdb)</u> to see required variables.
-
-For reference, Predator uses the following <u>[plugin](https://github.com/Nordstrom/artillery-plugin-influxdb)</u> to export InfluxDB metrics.
+InfluxDB export was removed in Predator 1.9: artillery v2's publish-metrics
+plugin has no InfluxDB reporter. Use the Prometheus integration above.
