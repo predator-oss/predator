@@ -31,11 +31,11 @@ describe('Docker hub connector tests', () => {
     it('Docker version is provided, no need to fetch latest version', async () => {
         dockerHubConnector.__set__('configHandler', {
             getConfigValue: () => {
-                return 'zooz/predator-runner:1.0.0';
+                return 'ghcr.io/predator-oss/predator-runner:1.0.0';
             }
         });
         const newestTag = await dockerHubConnector.getMostRecentRunnerTag();
-        newestTag.should.eql('zooz/predator-runner:1.0.0');
+        newestTag.should.eql('ghcr.io/predator-oss/predator-runner:1.0.0');
     });
 
     [{ results: [{ name: '1.0.0' }, { name: '0.9.9' }, { name: '1.0.1' }, { name: 'latest' }], expected: 'runner:1.0.1' },

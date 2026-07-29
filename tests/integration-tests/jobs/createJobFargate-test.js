@@ -25,7 +25,7 @@ describe('Create job specific aws fargate tests', async function () {
                 await configRequestCreator.init();
 
                 await configRequestCreator.updateConfig({
-                    runner_docker_image: 'zooz/predator-runner:latest',
+                    runner_docker_image: 'ghcr.io/predator-oss/predator-runner:latest',
                     custom_runner_definition: {
                         'us-west-2': {
                             capacity_provider: 'FARGATE_SPOT',

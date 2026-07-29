@@ -14,7 +14,7 @@ const schedulerRequestCreator = require('../integration-tests/jobs/helpers/reque
     { version: PREDATOR_VERSION } = require('../../package.json'),
     { KafkaHelper } = require('./helpers/kafkaHelper');
 
-const RUNNER_DOCKER_IMAGE = 'zooz/predator-runner:latest';
+const RUNNER_DOCKER_IMAGE = 'ghcr.io/predator-oss/predator-runner:latest';
 let kafkaHelper;
 let statsTime;
 let testBody;
