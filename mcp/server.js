@@ -18,7 +18,7 @@ async function api (method, path, body) {
     });
     const text = await res.text();
     let data;
-    try { data = text ? JSON.parse(text) : {}; } catch (e) { data = text; }
+    try { data = text ? JSON.parse(text) : {} } catch (e) { data = text }
     if (!res.ok) {
         throw new Error(`${method} ${path} -> ${res.status}: ${typeof data === 'string' ? data : JSON.stringify(data)}`);
     }
@@ -78,7 +78,7 @@ server.registerTool('update_test', {
 server.registerTool('delete_test', {
     description: 'Delete a test by id.',
     inputSchema: { test_id: z.string() }
-}, tool(async ({ test_id }) => { await api('DELETE', `/tests/${test_id}`); return { deleted: test_id }; }));
+}, tool(async ({ test_id }) => { await api('DELETE', `/tests/${test_id}`); return { deleted: test_id } }));
 
 server.registerTool('run_test', {
     description: 'Run a test now. Returns the job with report_id — poll get_report with it for results.',
@@ -96,7 +96,7 @@ server.registerTool('run_test', {
 server.registerTool('stop_run', {
     description: 'Stop a running test.',
     inputSchema: { job_id: z.string(), report_id: z.string() }
-}, tool(async ({ job_id, report_id }) => { await api('POST', `/jobs/${job_id}/runs/${report_id}/stop`); return { stopped: report_id }; }));
+}, tool(async ({ job_id, report_id }) => { await api('POST', `/jobs/${job_id}/runs/${report_id}/stop`); return { stopped: report_id } }));
 
 server.registerTool('list_reports', {
     description: 'List reports. With test_id: that test\'s runs; without: the most recent runs across all tests.',

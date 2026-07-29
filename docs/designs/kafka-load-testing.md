@@ -1,6 +1,6 @@
 # Kafka load testing with consumer-lag reporting
 
-Status: proposed · Depends on: predator-runner artillery v2 engine (predator-runner#2)
+Status: implemented · Depends on: predator-runner artillery v2 engine (predator-runner#2)
 
 ## Goal
 

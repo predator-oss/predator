@@ -22,6 +22,8 @@ It has a simple, one-click installation, built with support for Kubernetes, DC/O
 |--------------------------------|:------------------:|:---------|
 | Distributed Load               | :sparkle:          |Predator supports an unlimited number of load generators that produce multiple load runners concurrently.
 | Functional Testing             | :new:              |Run functional tests with various types of assertions and later on see the results in the report page.
+| Kafka Load Testing             | :new:              |Produce-side load against Kafka clusters with topic discovery, mixed HTTP+Kafka tests and consumer-lag charts in the report.
+| MCP Server                     | :new:              |Drive Predator from AI assistants: author tests, run them and read reports through the bundled [MCP server](mcp/README.md).
 | Streaming Integration          | :new:              |Produce predator resources to Kafka easily and seamlessly.
 | Rich UI                        | :sparkle:          |Predator offers a rich UI where you can write tests, run them and compare results.
 | Reports && Tests Persistence   | :sparkle:          |Predator provides out-of-the box functionality for persisting data in Postgres, MySQL, MSSQL and SQLITE.
@@ -31,7 +33,7 @@ It has a simple, one-click installation, built with support for Kubernetes, DC/O
 | REST API                       | :sparkle:          |Full REST API to integrate Predator with CI/CD frameworks
 | Benchmarks                     | :sparkle:          |Set benchmarks to compare test runs to ensure performance degradation is discovered early in development. Allows to measure every build and release against specified baseline results guaranteeing safer releases to production.|
 | Cloud Native                   | :sparkle:          |Predator is built to take advantage of Kubernetes and DC/OS. It's integrated with those platforms and can manage the load generators lifecycles by itself.
-| Prometheus/Influx integration  | :sparkle:          |Predator comes integrated with Prometheus and Influx. Simply configure it through the predator REST API or using the UI.
+| Prometheus integration         | :sparkle:          |Predator comes integrated with Prometheus. Simply configure it through the predator REST API or using the UI.
 | Compare Multiple tests results | :sparkle:          |Built-in dashboard to compare multiple test runs at once.
 | Webhooks API                   | :new:              |Supported in Slack, Microsoft Teams, Discord or JSON format for an easy server to server integration.
 | Chaos Mesh integration         | :new:              |Integration with Kubernetes Chaos Mesh, to create chaos experiments and integrate them with your performence/load tests.

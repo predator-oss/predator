@@ -22,7 +22,12 @@ async function buildClient (brokersOverride) {
         brokers: String(brokers).split(',').map(b => b.trim()),
         ssl: ssl === true || ssl === 'true' || undefined,
         sasl: saslMechanism ? { mechanism: saslMechanism, username: saslUsername, password: saslPassword } : undefined,
-        logLevel: logLevel.NOTHING
+        logLevel: logLevel.NOTHING,
+        // discovery endpoints are polled by the UI for broker status — fail fast
+        // instead of hanging through kafkajs's default 5-retry backoff
+        connectionTimeout: 2000,
+        requestTimeout: 10000,
+        retry: { retries: 1 }
     });
 }
 
