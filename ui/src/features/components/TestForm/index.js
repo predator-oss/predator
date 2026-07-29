@@ -21,6 +21,7 @@ import { FileDrop } from 'react-file-drop';
 import env from '../../../App/common/env';
 import { CONTENT_TYPES } from './constants'
 import { getKafkaTopics, getKafkaConsumerGroups } from '../../redux/apis/kafkaApi'
+import { getFrameworkConfig } from '../../redux/apis/configApi'
 import { isUrlValid, URL_FIELDS } from '../../../validators/validate-urls';
 import IconButton from '../../../components/IconButton';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
@@ -176,70 +177,62 @@ export class TestForm extends React.Component {
           <FormWrapper title={`${(editMode && 'Edit') || 'Create'} Test`}>
             <div style={{ flex: 1, overflow: 'scroll' }}>
               <div className={style['top']}>
-                <div className={style['top-inputs']}>
-                  {/* left */}
-                  <div onClick={this.setFavorite} className={style['favorite-star']}>
-                  <InfoToolTip data={{
-                      key: 'star-info',
-                      info: isFavorite ? 'Remove from favorites' : 'Add to favorites'
+                <div className={style['form-grid']}>
+                  <div className={style['name-cell']}>
+                    <div onClick={this.setFavorite} className={style['favorite-star']}>
+                      <InfoToolTip data={{
+                        key: 'star-info',
+                        info: isFavorite ? 'Remove from favorites' : 'Add to favorites'
                       }} icon={isFavorite ? fullStar : emptyStar} iconSize={'20px'}/>
-                  </div>
-                  <div className={style['input-container']}>
-                    <TitleInput style={{ flex: '1', marginTop: '2px' }} title={'Name'}>
+                    </div>
+                    <TitleInput style={{ flex: '1' }} title={'Name'}>
                       <TextArea maxRows={5} value={name} onChange={(evt, value) => {
                         this.setState({ name: evt.target.value })
                       }} />
                     </TitleInput>
                   </div>
-                  <div className={style['input-container']}>
-                    <TitleInput style={{ flex: '1', marginTop: '2px' }} title={'Description'}>
-                      <TextArea maxRows={5} value={description} onChange={(evt, value) => {
-                        this.setState({ description: evt.target.value })
-                      }} />
-                    </TitleInput>
-                  </div>
-                  <div className={style['input-container']}>
-                    <TitleInput style={{ flex: '1', marginTop: '2px' }} title={'Test type'}>
-                      <CustomDropdown list={['http', 'kafka', ENGINE_MIXED]} value={testEngine}
-                        onChange={(value) => this.onChangeTestEngine(value)} placeHolder={'http'} />
-                    </TitleInput>
-                  </div>
+                  <TitleInput title={'Description'}>
+                    <TextArea maxRows={5} value={description} onChange={(evt, value) => {
+                      this.setState({ description: evt.target.value })
+                    }} />
+                  </TitleInput>
+                  <TitleInput title={'Test type'}>
+                    <CustomDropdown list={['http', 'kafka', ENGINE_MIXED]} value={testEngine}
+                      onChange={(value) => this.onChangeTestEngine(value)} placeHolder={'http'} />
+                  </TitleInput>
+                  <TitleInput title={'Processor'}>
+                    <ProcessorsDropDown
+                      onChange={this.onProcessorChosen} options={processorsList} value={processorId}
+                      loading={processorsLoading} />
+                  </TitleInput>
                   {testEngine !== 'kafka' &&
-                  <div className={style['input-container']}>
-                    <TitleInput style={{ flex: '1', marginTop: '2px' }} title={'Base url'}>
-                      <ErrorWrapper errorText={validationErrors[URL_FIELDS.BASE].error}>
-                        <TextArea maxRows={5} value={baseUrl} placeholder={'http://my.api.com/'}
-                          onChange={(evt, value) => {
-                            this.setState({ baseUrl: evt.target.value }, () => {
-                              this.validateUrl()
-                            })
-                          }} />
-                      </ErrorWrapper>
-                    </TitleInput>
-                  </div>}
-                  {testEngine !== 'http' &&
-                  <div className={style['input-container']}>
-                    <TitleInput style={{ flex: '1', marginTop: '2px' }} title={'Kafka brokers'}>
-                      <TextArea maxRows={2} value={kafkaBrokers} placeholder={'broker1:9092,broker2:9092'}
-                        onChange={(evt) => this.onKafkaBrokersChange(evt.target.value)} />
-                    </TitleInput>
-                    {this.renderKafkaStatus(kafkaStatus, kafkaStatusMessage, kafkaTopics, kafkaConsumerGroups)}
-                  </div>}
-                  {testEngine !== 'http' &&
-                  <div className={style['input-container']}>
-                    <TitleInput style={{ flex: '1', marginTop: '2px' }} title={'Monitor consumer groups (lag)'}>
+                  <TitleInput title={'Base url'}>
+                    <ErrorWrapper errorText={validationErrors[URL_FIELDS.BASE].error}>
+                      <TextArea maxRows={5} value={baseUrl} placeholder={'http://my.api.com/'}
+                        onChange={(evt, value) => {
+                          this.setState({ baseUrl: evt.target.value }, () => {
+                            this.validateUrl()
+                          })
+                        }} />
+                    </ErrorWrapper>
+                  </TitleInput>}
+                </div>
+                {testEngine !== 'http' &&
+                <div className={style['kafka-panel']}>
+                  <div className={style['panel-label']}>Kafka</div>
+                  <div className={style['kafka-grid']}>
+                    <div>
+                      <TitleInput title={'Brokers'}>
+                        <TextArea maxRows={2} value={kafkaBrokers} placeholder={'broker1:9092,broker2:9092'}
+                          onChange={(evt) => this.onKafkaBrokersChange(evt.target.value)} />
+                      </TitleInput>
+                      {this.renderKafkaStatus(kafkaStatus, kafkaStatusMessage, kafkaTopics, kafkaConsumerGroups)}
+                    </div>
+                    <TitleInput title={'Monitor consumer groups (lag)'}>
                       {this.renderMonitoredGroups(kafkaMonitoredGroups, kafkaConsumerGroups, kafkaCustomGroup)}
                     </TitleInput>
-                  </div>}
-                  <div className={style['input-container']}>
-                    <TitleInput style={{ flex: '1', marginTop: '2px' }} title={'Processor'}>
-                      <ProcessorsDropDown
-                        onChange={this.onProcessorChosen} options={processorsList} value={processorId}
-                        loading={processorsLoading} />
-                    </TitleInput>
-
                   </div>
-                </div>
+                </div>}
               </div>
               {/* bottom */}
 
@@ -274,6 +267,15 @@ export class TestForm extends React.Component {
       // still type a topic — but we surface why.
       const brokers = (this.state.kafkaBrokers || '').trim() || undefined;
       this.setState({ kafkaStatus: 'connecting', kafkaStatusMessage: '' });
+      if (brokers) {
+        this.setState({ kafkaEffectiveBrokers: brokers, kafkaBrokersFromSettings: false });
+      } else {
+        // empty field falls back to predator's configured kafka_brokers — name
+        // it, so "Connected" is never mistaken for the empty field working
+        getFrameworkConfig()
+          .then((res) => this.setState({ kafkaEffectiveBrokers: res.data.kafka_brokers || '', kafkaBrokersFromSettings: true }))
+          .catch(() => this.setState({ kafkaEffectiveBrokers: '', kafkaBrokersFromSettings: true }));
+      }
       getKafkaTopics(brokers)
         .then((res) => this.setState({ kafkaTopics: res.data, kafkaStatus: 'connected' }))
         .catch((err) => {
@@ -329,32 +331,40 @@ export class TestForm extends React.Component {
 
     renderKafkaStatus = (status, message, topics, groups) => {
       // Status is colour + glyph + label (never colour alone), the same rule the
-      // rest of the product follows. It reflects the broker typed above (or, if
-      // empty, predator's configured kafka_brokers) — the same cluster the topic
-      // and consumer-group pickers list.
-      const brokers = (this.state.kafkaBrokers || '').trim();
+      // rest of the product follows. It always names the broker it actually
+      // checked, so an empty field can never read as "your input works" —
+      // empty falls back to predator's configured kafka_brokers, labelled as such.
+      const { kafkaEffectiveBrokers, kafkaBrokersFromSettings } = this.state;
+      const target = kafkaEffectiveBrokers ? `${kafkaEffectiveBrokers}${kafkaBrokersFromSettings ? ' (from Settings)' : ''}` : '';
       const base = { display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '6px', fontSize: 'var(--text-xs)' };
       if (status === 'connecting') {
-        return <div style={{ ...base, color: 'var(--fg-secondary)' }}>connecting{brokers ? ` to ${brokers}` : ''}…</div>;
+        return <div style={{ ...base, color: 'var(--fg-secondary)' }}>connecting{target ? ` to ${target}` : ''}…</div>;
       }
       if (status === 'connected') {
         return <div style={{ ...base, color: 'var(--held-fg)' }}
-          title={brokers ? `Connected to ${brokers} — topics and consumer groups below come from this cluster.` : 'Connected to Predator\'s configured Kafka broker (kafka_brokers in Settings). Type a broker above to check a different cluster.'}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--held-fg)' }} />
-          Connected — {topics.length} topic{topics.length === 1 ? '' : 's'}, {groups.length} group{groups.length === 1 ? '' : 's'}
+          title={'Topics and consumer groups below come from this cluster. Type a broker above to check a different one.'}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--held-fg)', flex: 'none' }} />
+          Connected to {target || 'Kafka'} — {topics.length} topic{topics.length === 1 ? '' : 's'}, {groups.length} group{groups.length === 1 ? '' : 's'}
         </div>;
       }
       if (status === 'error') {
         return <div style={{ ...base, color: 'var(--breach-fg)' }} title={message}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--breach-fg)' }} />
-          {brokers ? `Could not connect to ${brokers}` : 'Not connected'} — you can still type a topic below
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--breach-fg)', flex: 'none' }} />
+          {target ? `Could not connect to ${target}` : 'No broker — type one above or set kafka_brokers in Settings'}
         </div>;
       }
       return null;
     };
 
     onChangeTestEngine = (value) => {
-      this.setState({ testEngine: value }, () => {
+      if (value === this.state.testEngine) return;
+      // steps are engine-specific — restart each scenario's flow for the new
+      // engine instead of leaving http steps dressed up as kafka ones
+      const scenarios = this.state.scenarios.map((scenario) => {
+        const engine = value === ENGINE_MIXED ? 'http' : undefined;
+        return { ...scenario, engine, steps: [this.initStepForEngine(value === 'kafka' ? 'kafka' : 'http')] };
+      });
+      this.setState({ testEngine: value, scenarios, before: value === 'kafka' ? undefined : this.state.before }, () => {
         if (value !== 'http') this.loadKafkaDiscovery();
       });
     };
@@ -617,7 +627,7 @@ export class TestForm extends React.Component {
             <div className={style['actions-style']} onClick={this.addScenarioHandler}>+Add Scenario</div>
             <div className={style['actions-style']} onClick={this.addStepHandler}>+Add Step</div>
             <div className={style['actions-style']} onClick={() => this.addStepHandler(SLEEP)}>+Add Sleep</div>
-            {this.state.testEngine === 'http' &&
+            {this.state.testEngine !== 'kafka' &&
             <div className={style['actions-style']} onClick={this.addBeforeHandler}>+Add Before</div>}
             <div className={style['actions-style']}
               onClick={() => this.setState({ csvMode: true })}>{(csvFile || csvMetadata) ? 'Modify' : '+Add'} CSV
@@ -640,16 +650,6 @@ export class TestForm extends React.Component {
                   }} tab={tabData.scenario_name || 'Scenario'}
                     key={tabData.id}>
                     {
-                      !tabData.isBefore && this.state.testEngine === ENGINE_MIXED &&
-                      <div style={{ width: '80%', marginBottom: '8px' }}>
-                        <TitleInput title={'Scenario engine'} style={{ maxWidth: '220px' }}>
-                          <CustomDropdown list={['http', 'kafka']} value={this.scenarioEngine(tabData)}
-                            onChange={(value) => this.onChangeScenarioEngine(index - (this.state.before ? 1 : 0), value)}
-                            placeHolder={'http'} />
-                        </TitleInput>
-                      </div>
-                    }
-                    {
                       !tabData.isBefore &&
                       <div style={{ width: '80%' }}>
 
@@ -658,6 +658,9 @@ export class TestForm extends React.Component {
                           scenario={tabData}
                           onChangeValueOfScenario={this.onChangeValueOfScenario}
                           processorsExportedFunctions={processorsExportedFunctions}
+                          showEngine={this.state.testEngine === ENGINE_MIXED}
+                          engineValue={this.scenarioEngine(tabData)}
+                          onChangeEngine={(value) => this.onChangeScenarioEngine(index - (this.state.before ? 1 : 0), value)}
                           onDeleteScenario={scenarios.length === 1 ? undefined : this.onDeleteScenario}
                           onDuplicateScenario={this.onDuplicateScenario}
                         />

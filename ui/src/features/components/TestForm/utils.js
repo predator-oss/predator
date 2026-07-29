@@ -66,8 +66,9 @@ export const createTestRequest = (data) => {
     processor_id: processorId,
     artillery_test: {
       config,
-      // a before block alongside the kafka engine hangs artillery — http-only for now
-      before: (testEngine === 'http' && before) ? { flow: prepareFlow(before.steps) } : undefined,
+      // before is an http flow; pure-kafka tests have a kafka:// target so
+      // relative urls in it would have nothing to resolve against
+      before: (testEngine !== 'kafka' && before) ? { flow: prepareFlow(before.steps) } : undefined,
       scenarios: scenariosRequest
     },
     csv_file_id: csvFileId,
