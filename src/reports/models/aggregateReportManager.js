@@ -86,12 +86,22 @@ function createAggregateManually(listOfStats) {
             mean: 0,
             count: 0
         },
-        scenarioDuration: {}
+        scenarioDuration: {},
+        summaries: {}
     };
 
     _.each(listOfStats, function (stats) {
         result.bucket = stats.bucket;
         result.concurrency += stats.concurrency;
+
+        // Engine-custom summaries (kafka.consumer_lag_*, etc.) ride along per
+        // bucket. Multiple runners report the same external measurement, so
+        // keep the sample with the highest max rather than summing duplicates.
+        _.each(stats.summaries || {}, function (summary, name) {
+            if (!result.summaries[name] || (summary.max || 0) > (result.summaries[name].max || 0)) {
+                result.summaries[name] = summary;
+            }
+        });
 
         requestMedians.push(stats.latency.median || 0);
         requestMaxs.push(stats.latency.max || 0);

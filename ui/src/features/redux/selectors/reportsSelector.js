@@ -95,6 +95,7 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
 
   return reports.map((report) => {
     const latencyGraph = [];
+    const consumerLagGraph = [];
     const errorsCodeGraph = [];
     const errorsGraph = [];
     const errors = {};
@@ -133,6 +134,17 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
           ...lastBenchmark.rps
         });
 
+        const lag = bucket.summaries && bucket.summaries['kafka.consumer_lag_total'];
+        if (lag) {
+          consumerLagGraph.push({
+            name: buildDateFormat(time),
+            timeMills,
+            [`${prefix}median`]: lag.median,
+            [`${prefix}p95`]: lag.p95,
+            [`${prefix}max`]: lag.max
+          });
+        }
+
         const errorsData = buildErrorDataObject(bucket, prefix);
         errorsCodeGraphKeysAsObjectAcc = Object.assign(errorsCodeGraphKeysAsObjectAcc, errorsData);
         errorsCodeGraph.push({
@@ -142,7 +154,7 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
         });
       });
     }
-    addStartEndTimeToGraphs([latencyGraph, rps, errorsCodeGraph], startDate, endDate);
+    addStartEndTimeToGraphs(consumerLagGraph.length ? [latencyGraph, rps, errorsCodeGraph, consumerLagGraph] : [latencyGraph, rps, errorsCodeGraph], startDate, endDate);
 
     // aggregate data
     buildErrorBars(errorsBar, report.aggregate, lastBenchmark, prefix);
@@ -179,6 +191,8 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
       rpsKeys.push(...lastBenchmark.rpsKeys);
       errorsBarKeys.push('benchmark_count');
     }
+    const consumerLagGraphKeys = [`${prefix}median`, `${prefix}p95`, `${prefix}max`];
+    const consumerLagGraphMax = findMaxY(consumerLagGraph, consumerLagGraphKeys);
     const latencyGraphMax = findMaxY(latencyGraph, latencyGraphKeys);
     const rpsGraphMax = findMaxY(rps, rpsKeys);
     const errorsGraphMax = findMaxY(errorsCodeGraph, errorsCodeGraphKeys);
@@ -188,6 +202,9 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
       latencyGraph,
       latencyGraphKeys,
       latencyGraphMax,
+      consumerLagGraph,
+      consumerLagGraphKeys,
+      consumerLagGraphMax,
       rpsGraphMax,
       errorsCodeGraph,
       errorsCodeGraphKeys,
