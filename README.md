@@ -63,7 +63,7 @@ To see the progress of `v1.5.0` [click here](https://github.com/predator-oss/pre
 -----------------------------------------------------
 ## Quick View
 
-![](https://predator-oss.github.io/predator/images/predator-screens.gif)
+![Predator test report](https://predator-oss.github.io/predator/images/report-dark.png)
 
 
 ## System Overview

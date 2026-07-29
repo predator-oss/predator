@@ -30,7 +30,9 @@ Predator is a performance platform that can be configured to automatically load 
 load engine to fire the requests. The schema for creating tests via the Predator REST API is based on the artillery schema.
 
 ## UI
-<img src="images/predator-screens.gif"/>
+<img src="images/report-dark.png" alt="Predator test report"/>
+
+<img src="images/last-reports-dark.png" alt="Last reports"/>
 
 ## Under the hood
 ![Screenshot](images/predator-overview.png)
