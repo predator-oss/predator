@@ -47,7 +47,9 @@ export const createTestRequest = (data) => {
     };
   } else if (isMixed) {
     config = {
-      target: baseUrl,
+      // artillery refuses to start with no target at all — a mixed test with
+      // only kafka scenarios and no base url still needs one
+      target: baseUrl || `kafka://${brokers.join(',')}`,
       engines: { kafka: {} },
       kafka: kafkaBlock,
       plugins: { expect: {} }
@@ -66,8 +68,9 @@ export const createTestRequest = (data) => {
     processor_id: processorId,
     artillery_test: {
       config,
-      // a before block alongside the kafka engine hangs artillery — http-only for now
-      before: (testEngine === 'http' && before) ? { flow: prepareFlow(before.steps) } : undefined,
+      // before is an http flow; pure-kafka tests have a kafka:// target so
+      // relative urls in it would have nothing to resolve against
+      before: (testEngine !== 'kafka' && before) ? { flow: prepareFlow(before.steps) } : undefined,
       scenarios: scenariosRequest
     },
     csv_file_id: csvFileId,

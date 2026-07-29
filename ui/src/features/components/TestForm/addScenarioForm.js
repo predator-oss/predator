@@ -5,6 +5,7 @@ import ProcessorsDropDown from './ProcessorsDropDown';
 import Input from '../../../components/Input';
 import TitleInput from '../../../components/TitleInput';
 import AdditionalInfo from './additionalInfo';
+import CustomDropdown from '../../../components/Dropdown/CustomDropdown';
 
 const AddScenarioForm = (props) => {
   const onChangeValue = (key, value) => {
@@ -12,7 +13,7 @@ const AddScenarioForm = (props) => {
     onChangeValue(key, value);
   };
 
-  const { scenario, allowedWeight, processorsExportedFunctions } = props;
+  const { scenario, allowedWeight, processorsExportedFunctions, showEngine, engineValue, onChangeEngine } = props;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'left', width: '100%' }}>
 
@@ -21,6 +22,11 @@ const AddScenarioForm = (props) => {
           onChangeValue('scenario_name', evt.target.value);
         }} />
       </TitleInput>
+      {showEngine &&
+      <TitleInput style={{ marginTop: '10px', maxWidth: '220px' }} title={'Engine'}>
+        <CustomDropdown list={['http', 'kafka']} value={engineValue}
+          onChange={onChangeEngine} placeHolder={'http'} />
+      </TitleInput>}
       <TitleInput style={{ marginTop: '10px' }} title={'Before Scenario'}>
         <ProcessorsDropDown options={processorsExportedFunctions}
           onChange={(value) => onChangeValue('beforeScenario', value)}

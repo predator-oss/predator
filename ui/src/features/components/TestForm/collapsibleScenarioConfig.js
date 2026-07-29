@@ -66,12 +66,13 @@ export default class CollapsibleScenarioConfig extends React.Component {
     }
 
     generateBody = () => {
-        const {processorsExportedFunctions,currentScenarioIndex,scenario,onChangeValueOfScenario,allowedWeight } = this.props;
+        const {processorsExportedFunctions,currentScenarioIndex,scenario,onChangeValueOfScenario,allowedWeight,showEngine,engineValue,onChangeEngine } = this.props;
         return (
             <div style={{padding: '10px'}}>
                 <AddScenarioForm allowedWeight={allowedWeight}
                                  key={currentScenarioIndex}
                                  scenario={scenario} onChangeValue={onChangeValueOfScenario}
+                                 showEngine={showEngine} engineValue={engineValue} onChangeEngine={onChangeEngine}
                                  processorsExportedFunctions={processorsExportedFunctions}/>
             </div>
 
