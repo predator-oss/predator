@@ -18,6 +18,7 @@ const processorsRouter = require('./processors/routes/processorsRoute.js');
 const filesRouter = require('./files/routes/filesRoute.js');
 const webhooksRouter = require('./webhooks/routes/webhooksRouter');
 const chaosExperimentsRouter = require('./chaos-experiments/routes/chaosExperimentsRoute');
+const kafkaRouter = require('./kafka/routes/kafkaRoute');
 const swaggerValidator = require('express-ajv-swagger-validation');
 const database = require('./database/database');
 const jobsManager = require('./jobs/models/jobManager');
@@ -76,6 +77,7 @@ module.exports = async () => {
 
     app.use('/health', healthRouter);
     app.use('/v1/config', configRouter);
+    app.use('/v1/kafka', kafkaRouter);
     app.use('/v1/jobs', jobsRouter);
     app.use('/v1/dsl', dslRouter);
     app.use('/v1/tests', reportsRouter);

@@ -1304,6 +1304,42 @@ paths:
           description: Success
         '400':
           description: Unsupported File Format
+  /v1/kafka/topics:
+    get:
+      tags:
+        - Kafka
+      summary: List topics in the configured Kafka cluster
+      responses:
+        '200':
+          description: Topic names
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '422':
+          description: Kafka is not configured
+        '502':
+          description: Kafka unreachable
+  /v1/kafka/consumer-groups:
+    get:
+      tags:
+        - Kafka
+      summary: List consumer groups in the configured Kafka cluster
+      responses:
+        '200':
+          description: Consumer group ids
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '422':
+          description: Kafka is not configured
+        '502':
+          description: Kafka unreachable
   /v1/config:
     parameters:
       - $ref: '#/components/parameters/context_id'
@@ -2924,6 +2960,25 @@ components:
         chaos_mesh_enabled:
           type: boolean
           description: If true, allow chaos mesh experiments
+        kafka_brokers:
+          type: string
+          description: 'Comma-separated Kafka broker list for kafka load tests (host:port,host:port)'
+        kafka_ssl:
+          type: boolean
+          description: Use SSL when connecting to Kafka
+        kafka_sasl_mechanism:
+          type: string
+          enum:
+            - plain
+            - scram-sha-256
+            - scram-sha-512
+          description: SASL mechanism for Kafka authentication
+        kafka_sasl_username:
+          type: string
+          description: SASL username for Kafka
+        kafka_sasl_password:
+          type: string
+          description: SASL password for Kafka
         metrics_plugin_name:
           type: string
           enum:

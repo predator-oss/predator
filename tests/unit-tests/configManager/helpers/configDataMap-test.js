@@ -8,6 +8,11 @@ const valuesToCheck = ['grafana_url', 'internal_address', 'runner_docker_image',
 
 let manager;
 const expectedTypes = {
+    kafka_brokers: undefined,
+    kafka_ssl: 'boolean',
+    kafka_sasl_mechanism: undefined,
+    kafka_sasl_username: undefined,
+    kafka_sasl_password: undefined,
     grafana_url: undefined,
     internal_address: undefined,
     runner_docker_image: undefined,
