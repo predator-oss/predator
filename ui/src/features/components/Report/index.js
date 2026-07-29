@@ -179,6 +179,21 @@ class Report extends React.Component {
                     referenceAreas={aggregateReport.referenceAreas}
                   />
                 </Card>
+
+                {aggregateReport.consumerLagGraph && aggregateReport.consumerLagGraph.length > 0 &&
+                <Card style={{ display: 'flex', flexDirection: 'column', marginBottom: '15px' }}>
+                  <h3 className='report-chart-title'>Consumer Lag</h3>
+                  <LineChartPredator
+                    data={aggregateReport.consumerLagGraph}
+                    keys={aggregateReport.consumerLagGraphKeys}
+                    labelY={'messages'}
+                    graphType={'consumer_lag'}
+                    maxY={aggregateReport.consumerLagGraphMax}
+                    onSelectedGraphPropertyFilter={this.onSelectedGraphPropertyFilter}
+                    filteredKeys={filteredKeys}
+                    referenceAreas={aggregateReport.referenceAreas}
+                  />
+                </Card>}
                 <Card style={{
                   display: 'flex',
                   marginBottom: '15px',
