@@ -3,9 +3,12 @@
 An [MCP](https://modelcontextprotocol.io) server that exposes the Predator API as tools,
 so an AI assistant can author load tests, run them, and read the results.
 
+Full documentation: [MCP Server](https://predator-oss.github.io/predator/mcp.html) in the devguide.
+
 ## Connect from Claude Code
 
 ```bash
+cd mcp && npm install
 claude mcp add predator --env PREDATOR_URL=http://localhost:8088/v1 -- node /path/to/predator/mcp/server.js
 ```
 

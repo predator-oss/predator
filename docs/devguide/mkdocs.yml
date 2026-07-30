@@ -23,6 +23,7 @@ nav:
   - Integrating Chaos Mesh with Predator: chaosmesh.md
   - FAQ: faq.md
   - Contributing: contributing.md
+  - MCP Server: mcp.md
   - API Reference: apireference.md
 
 theme:

@@ -1,33 +1,35 @@
 # Kafka Load Testing
-!!! TIP "Supported from version ghcr.io/predator-oss/predator:1.9.0"
+!!! TIP "Supported from version ghcr.io/predator-oss/predator:1.8.4"
 
 Predator can generate produce-side load against a Kafka cluster, monitor the lag of the
 consumer groups reading from it, and chart that lag in the run's report — alongside the
 usual latency/RPS metrics. Kafka scenarios can also be mixed with HTTP scenarios in a
 single test.
 
+!!! NOTE
+    This is different from [Streaming Platforms](streaming.md), which publishes Predator's
+    own lifecycle events *to* Kafka. This page is about load testing *your* Kafka cluster.
+
 ## Setting up
 
-Point Predator at your cluster with the `kafka_brokers` runtime configuration key
-(Settings page in the UI, or `PUT /v1/config`). The brokers must be reachable **from the
-runner's network** — e.g. inside the same docker network or Kubernetes cluster as the
-predator-runner containers.
+Point Predator at your cluster with the `kafka_brokers` configuration key — from the
+Settings page in the UI, or through `PUT /v1/config`. SSL and SASL are supported.
+For the full list of keys please refer to: <u>[Kafka configuration manual](configuration.md#kafka-load-testing)</u>.
 
-| Configuration key      | Description                                              |
-|------------------------|----------------------------------------------------------|
-| `kafka_brokers`        | Comma-separated broker list (`host:port,host:port`)      |
-| `kafka_ssl`            | `true` to connect over SSL                               |
-| `kafka_sasl_mechanism` | SASL mechanism (e.g. `scram-sha-512`), enables SASL auth |
-| `kafka_sasl_username`  | SASL username                                            |
-| `kafka_sasl_password`  | SASL password                                            |
+!!! WARNING
+    The brokers must be reachable **from the runner's network** — e.g. inside the same
+    docker network or Kubernetes cluster as the predator-runner containers, not just from
+    where the Predator server runs.
 
-Once configured, Predator can discover the cluster for you:
+Once configured, Predator can discover the cluster:
 
-- `GET /v1/kafka/topics` — topics (internal `__` topics filtered out)
+- `GET /v1/kafka/topics` — topics (internal `__` topics are filtered out)
 - `GET /v1/kafka/consumer-groups` — consumer groups, candidates for lag monitoring
 
-Both accept an optional `?brokers=` override. The UI test form uses these endpoints to
-offer topic and consumer-group pickers with a live broker connectivity status.
+Both accept an optional `?brokers=` override to inspect a cluster other than the
+configured one. The UI test form builds on these endpoints: it shows a live broker
+connectivity status and offers topic and consumer-group pickers, so a Kafka scenario can
+be authored without leaving the form.
 
 ## Writing a Kafka test
 
@@ -36,6 +38,7 @@ A Kafka test is a regular artillery test whose scenarios run on the kafka engine
 ```json
 {
   "name": "orders produce load",
+  "description": "produce-side load on the orders topic",
   "type": "basic",
   "artillery_test": {
     "config": {
@@ -67,15 +70,16 @@ A Kafka test is a regular artillery test whose scenarios run on the kafka engine
 
 - `config.kafka.brokers` — the cluster the runners will produce to.
 - `config.kafka.lagMonitor.consumerGroups` — consumer groups whose lag is sampled during
-  the run and reported per topic-partition.
-- `produce` steps take `topic`, an optional `key`, and `message` (object or string,
-  artillery variable templating works as usual).
+  the run and reported per group and per topic-partition.
+- `produce` steps take a `topic`, an optional `key`, and a `message` (object or string —
+  artillery variable templating works as usual, so CSV datasets and processors can feed
+  the payload).
 
 ## Mixed HTTP + Kafka tests
 
 Set `config.target` to the HTTP base url and mark only the kafka scenarios with
 `engine: "kafka"`. A `before` flow (HTTP setup requests, e.g. warming endpoints or
-fetching tokens) runs once before the load starts — for both engines:
+fetching tokens) runs once before the load starts, for both engines:
 
 ```json
 {
@@ -98,24 +102,26 @@ fetching tokens) runs once before the load starts — for both engines:
 }
 ```
 
+Scenario weights split the virtual users between the HTTP and Kafka scenarios exactly as
+they do in an HTTP-only test.
+
 ## Reading the report
 
 Kafka runs report the standard artillery metrics (publish latency percentiles, RPS,
-errors) plus consumer-lag summaries that ride along in each stats bucket:
+errors) plus consumer-lag summaries that ride along in each stats interval:
 
-- `kafka.consumer_lag_total.<group>` — total lag of the group
-- `kafka.consumer_lag_partition.<group>.<topic>.<partition>` — per-partition lag
+| Metric | Meaning |
+|---|---|
+| `kafka.consumer_lag_total.<group>` | total lag of the consumer group |
+| `kafka.consumer_lag_max_partition.<group>` | the group's worst single partition |
+| `kafka.consumer_lag_partition.<group>.<topic>.<partition>` | lag of one topic-partition |
 
-The report page charts consumer lag over time next to the latency and RPS charts. When
-multiple runners report the same group's lag, Predator keeps the highest sample instead
-of summing duplicates of the same external measurement.
+The report page charts consumer lag over time next to the latency and RPS charts — one
+series per monitored group, plus a per-partition breakdown. When multiple runners report
+the same group's lag, Predator keeps the highest sample rather than summing duplicates of
+the same external measurement.
 
-## Driving it from an AI assistant (MCP)
-
-The repository ships an [MCP server](https://github.com/predator-oss/predator/tree/master/mcp)
-that exposes this whole flow — cluster discovery, test authoring, running, and lag-aware
-report reading — as tools for AI assistants such as Claude:
-
-```bash
-claude mcp add predator --env PREDATOR_URL=http://localhost/v1 -- node /path/to/predator/mcp/server.js
-```
+The same summaries are exported through the report API
+(`GET /v1/tests/{test_id}/reports/{report_id}/aggregate`) and, when the Prometheus
+integration is configured, pushed as `kafka_consumer_lag_total` /
+`kafka_consumer_lag_max_partition` / `kafka_consumer_lag_partition` gauges for Grafana.

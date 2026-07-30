@@ -103,9 +103,17 @@ Applicable when STREAMING_PLATFORM = Kafka
 |                      	| prometheus_metrics.buckets_sizes    	| Bucket sizes to configure prometheus 	            | ✓                        	|               	|
 |                      	| prometheus_metrics.labels    	        | Labels will be passed to the push gateway       	| ✓                        	|               	|
 
-#### InfluxDB
-| Environment Variable 	| Configuration key       	| Description        	| Configurable from UI/API 	| Default value 	|
-|----------------------	|-------------------------	|--------------------	|--------------------------	|---------------	|
+## Kafka Load Testing
+Used by [Kafka load tests](kafkatesting.md) and the kafka topic/consumer-group discovery API.
+Not to be confused with the [Streaming](configuration.md#kafka) settings above, which publish Predator's own events to Kafka.
+
+| Environment Variable 	| Configuration key    	| Description                                               	| Configurable from UI/API 	| Default value 	|
+|----------------------	|----------------------	|-----------------------------------------------------------	|--------------------------	|---------------	|
+| KAFKA_BROKERS        	| kafka_brokers        	| Comma-separated broker list (host:port,host:port), must be reachable from the runner's network 	| ✓ 	|               	|
+| KAFKA_SSL            	| kafka_ssl            	| Connect to the brokers over SSL                           	| ✓                        	| false         	|
+| KAFKA_SASL_MECHANISM 	| kafka_sasl_mechanism 	| SASL mechanism (e.g. scram-sha-512); enables SASL when set 	| ✓                        	|               	|
+| KAFKA_SASL_USERNAME  	| kafka_sasl_username  	| SASL username                                             	| ✓                        	|               	|
+| KAFKA_SASL_PASSWORD  	| kafka_sasl_password  	| SASL password                                             	| ✓                        	|               	|
 
 ## SMTP Server
 | Environment Variable 	| Configuration key    	| Description                                               	| Configurable from UI/API 	| Default value 	|
