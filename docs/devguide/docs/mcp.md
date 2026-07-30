@@ -1,5 +1,5 @@
 # MCP Server
-!!! TIP "Supported from version ghcr.io/predator-oss/predator:1.8.4"
+!!! TIP "Supported from version ghcr.io/predator-oss/predator:1.9.0"
 
 Predator ships an [MCP](https://modelcontextprotocol.io) (Model Context Protocol) server
 that exposes the REST API as tools, so an AI assistant such as Claude can author load
