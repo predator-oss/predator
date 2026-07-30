@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.9.0](https://github.com/predator-oss/predator/compare/v1.8.4...v1.9.0) (2026-07-30)
+
+
+### Features
+
+* kafka topic and consumer-group discovery ([#7](https://github.com/predator-oss/predator/issues/7)) ([10c6251](https://github.com/predator-oss/predator/commit/10c6251ffe4edda2707a2dad8338d7ff995e3b6d))
+* kafka topic combobox and docker runner network ([#14](https://github.com/predator-oss/predator/issues/14)) ([e46fb66](https://github.com/predator-oss/predator/commit/e46fb66600f228fa1f8dcce401e5f873d338ad3e))
+* **kafka:** broker check, multi-select groups, partition lag, mixed tests ([#10](https://github.com/predator-oss/predator/issues/10)) ([89032c8](https://github.com/predator-oss/predator/commit/89032c876c5681053039c0d479acf285e6506694))
+* **ui:** consumer lag chart on the report page ([#8](https://github.com/predator-oss/predator/issues/8)) ([921c2ab](https://github.com/predator-oss/predator/commit/921c2abfe6751f83d4da6490ffd925edce178278))
+* **ui:** kafka scenario authoring in the test form ([#9](https://github.com/predator-oss/predator/issues/9)) ([f5ce68e](https://github.com/predator-oss/predator/commit/f5ce68e0f68fb3dab1ed08aa06efd6d4e5067b1e))
+
 ### [1.8.4](https://github.com/predator-oss/predator/compare/v1.8.3...v1.8.4) (2026-07-29)
 
 ### [1.8.4](https://github.com/predator-oss/predator/compare/v1.8.3...v1.8.4) (2026-07-29)
