@@ -142,7 +142,21 @@ class Report extends React.Component {
               (report.status === 'failed' && <div style={{ marginTop: '10px', alignSelf: 'center' }}>{TEST_FAIL_ERROR}</div>) ||
               <>
                 <Card style={{ display: 'flex', flexDirection: 'column', marginBottom: '15px' }}>
-                  <h3 className='report-chart-title'>Overall Latency</h3>
+                  <h3 className='report-chart-title'>Throughput</h3>
+                  <LineChartPredator
+                    data={aggregateReport.throughputGraph}
+                    keys={aggregateReport.throughputGraphKeys}
+                    labelY={'ops/sec'}
+                    maxY={aggregateReport.throughputGraphMax}
+                    graphType={'throughput'}
+                    onSelectedGraphPropertyFilter={this.onSelectedGraphPropertyFilter}
+                    filteredKeys={filteredKeys}
+                    referenceAreas={aggregateReport.referenceAreas}
+                  />
+                </Card>
+                {aggregateReport.hasHttp &&
+                <Card style={{ display: 'flex', flexDirection: 'column', marginBottom: '15px' }}>
+                  <h3 className='report-chart-title'>HTTP Latency</h3>
                   <LineChartPredator
                     data={aggregateReport.latencyGraph}
                     keys={aggregateReport.latencyGraphKeys}
@@ -152,9 +166,23 @@ class Report extends React.Component {
                     filteredKeys={filteredKeys}
                     referenceAreas={aggregateReport.referenceAreas}
                   />
-                </Card>
+                </Card>}
+                {aggregateReport.hasKafka && aggregateReport.kafkaLatencyGraph && aggregateReport.kafkaLatencyGraph.length > 0 &&
                 <Card style={{ display: 'flex', flexDirection: 'column', marginBottom: '15px' }}>
-                  <h3 className='report-chart-title'>Status Codes</h3>
+                  <h3 className='report-chart-title'>Kafka Publish Latency</h3>
+                  <LineChartPredator
+                    data={aggregateReport.kafkaLatencyGraph}
+                    keys={aggregateReport.kafkaLatencyGraphKeys}
+                    labelY={'ms'} graphType={'kafka_latency'}
+                    maxY={aggregateReport.kafkaLatencyGraphMax}
+                    onSelectedGraphPropertyFilter={this.onSelectedGraphPropertyFilter}
+                    filteredKeys={filteredKeys}
+                    referenceAreas={aggregateReport.referenceAreas}
+                  />
+                </Card>}
+                {aggregateReport.errorsCodeGraphKeys && aggregateReport.errorsCodeGraphKeys.length > 0 &&
+                <Card style={{ display: 'flex', flexDirection: 'column', marginBottom: '15px' }}>
+                  <h3 className='report-chart-title'>Status Codes & Errors Over Time</h3>
                   <LineChartPredator
                     data={aggregateReport.errorsCodeGraph}
                     keys={aggregateReport.errorsCodeGraphKeys}
@@ -165,21 +193,7 @@ class Report extends React.Component {
                     filteredKeys={filteredKeys}
                     referenceAreas={aggregateReport.referenceAreas}
                   />
-                </Card>
-
-                <Card style={{ display: 'flex', flexDirection: 'column', marginBottom: '15px' }}>
-                  <h3 className='report-chart-title'>RPS</h3>
-                  <LineChartPredator
-                    data={aggregateReport.rps}
-                    keys={aggregateReport.rpsKeys}
-                    labelY={'rps'}
-                    maxY={aggregateReport.rpsGraphMax}
-                    graphType={'rps'}
-                    onSelectedGraphPropertyFilter={this.onSelectedGraphPropertyFilter}
-                    filteredKeys={filteredKeys}
-                    referenceAreas={aggregateReport.referenceAreas}
-                  />
-                </Card>
+                </Card>}
 
                 {aggregateReport.consumerLagGraph && aggregateReport.consumerLagGraph.length > 0 &&
                 <Card style={{ display: 'flex', flexDirection: 'column', marginBottom: '15px' }}>
@@ -209,6 +223,7 @@ class Report extends React.Component {
                   justifyContent: 'space-evenly',
                   height: '470px'
                 }}>
+                  {aggregateReport.errorsBar && aggregateReport.errorsBar.length > 0 &&
                   <div style={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -222,7 +237,7 @@ class Report extends React.Component {
                       graphType={'status_codes_errors'}
                       onSelectedGraphPropertyFilter={this.onSelectedGraphPropertyFilter}
                       filteredKeys={filteredKeys} />
-                  </div>
+                  </div>}
                   <div style={{
                     display: 'flex',
                     flexDirection: 'column',
