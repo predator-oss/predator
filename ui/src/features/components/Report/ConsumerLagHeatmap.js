@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 // Lag per partition is a magnitude, not an identity: dozens of partitions as
 // coloured lines is unreadable spaghetti with a legend the size of the chart.
@@ -39,6 +39,8 @@ const cellColor = (value, max) => {
 };
 
 const ROW_HEIGHT = 16;
+const EDGE_GAP = 4;
+const clamp = (value, min, max) => Math.min(Math.max(value, min), Math.max(min, max));
 const LABEL_WIDTH = 64;
 
 const parseRows = (keys) => {
@@ -57,6 +59,16 @@ const parseRows = (keys) => {
 
 const ConsumerLagHeatmap = ({ data = [], keys = [] }) => {
   const [tooltip, setTooltip] = useState(null);
+  // The tooltip is positioned against the heatmap box, so a cell near either
+  // edge would render half outside it and get clipped. Measure the rendered
+  // tooltip and clamp it back inside instead of letting it overflow.
+  const tipRef = useRef(null);
+  const [tipSize, setTipSize] = useState({ width: 0, height: 0 });
+  useLayoutEffect(() => {
+    if (tooltip && tipRef.current) {
+      setTipSize({ width: tipRef.current.offsetWidth, height: tipRef.current.offsetHeight });
+    }
+  }, [tooltip]);
 
   const { groups, columns, max } = useMemo(() => {
     const columns = data.filter((point) => keys.some((k) => point[k] !== undefined));
@@ -103,6 +115,7 @@ const ConsumerLagHeatmap = ({ data = [], keys = [] }) => {
                         setTooltip({
                           x: cell.left - container.left + cell.width / 2,
                           y: cell.top - container.top,
+                          containerWidth: container.width,
                           text: `${topic}[${partition}] — ${value === undefined ? 'no data' : `${value.toLocaleString()} messages behind (${bandOf(value).name})`} @ ${point.name}`
                         });
                       }}
@@ -162,13 +175,17 @@ const ConsumerLagHeatmap = ({ data = [], keys = [] }) => {
       </div>
 
       {tooltip && (
-        <div style={{
+        <div ref={tipRef} style={{
           position: 'absolute',
-          left: `${tooltip.x}px`,
-          top: `${tooltip.y - 34}px`,
+          // Clamp horizontally so the box always sits fully inside the heatmap,
+          // and flip below the cell when there is no room above it.
+          left: `${clamp(tooltip.x, tipSize.width / 2 + EDGE_GAP, tooltip.containerWidth - tipSize.width / 2 - EDGE_GAP)}px`,
+          top: `${tooltip.y - tipSize.height - 6 < 0 ? tooltip.y + ROW_HEIGHT + 6 : tooltip.y - tipSize.height - 6}px`,
           transform: 'translateX(-50%)',
           pointerEvents: 'none',
-          whiteSpace: 'nowrap',
+          maxWidth: `${Math.max(160, tooltip.containerWidth - EDGE_GAP * 2)}px`,
+          whiteSpace: 'normal',
+          textAlign: 'center',
           background: 'var(--bg-surface-raised)',
           border: '1px solid var(--border-default)',
           borderRadius: 'var(--radius-md)',
