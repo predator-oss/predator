@@ -87,7 +87,8 @@ function createAggregateManually(listOfStats) {
             count: 0
         },
         scenarioDuration: {},
-        summaries: {}
+        summaries: {},
+        counters: {}
     };
 
     _.each(listOfStats, function (stats) {
@@ -101,6 +102,14 @@ function createAggregateManually(listOfStats) {
             if (!result.summaries[name] || (summary.max || 0) > (result.summaries[name].max || 0)) {
                 result.summaries[name] = summary;
             }
+        });
+
+        // Counters (kafka.messages_sent, vusers.*, engine-custom) are per-runner
+        // tallies of work each runner did, so they sum — unlike summaries above,
+        // which sample one shared external value. Dropping them here is what made
+        // parallel runs report zero kafka traffic while the load was real.
+        _.each(stats.counters || {}, function (count, name) {
+            result.counters[name] = (result.counters[name] || 0) + count;
         });
 
         requestMedians.push(stats.latency.median || 0);

@@ -13,7 +13,7 @@ const AddScenarioForm = (props) => {
     onChangeValue(key, value);
   };
 
-  const { scenario, allowedWeight, processorsExportedFunctions, showEngine, engineValue, onChangeEngine } = props;
+  const { scenario, allowedWeight, processorsExportedFunctions, showEngine, engineValue, onChangeEngine, isKafkaScenario } = props;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'left', width: '100%' }}>
 
@@ -26,6 +26,12 @@ const AddScenarioForm = (props) => {
       <TitleInput style={{ marginTop: '10px', maxWidth: '220px' }} title={'Engine'}>
         <CustomDropdown list={['http', 'kafka']} value={engineValue}
           onChange={onChangeEngine} placeHolder={'http'} />
+      </TitleInput>}
+      {isKafkaScenario &&
+      <TitleInput style={{ marginTop: '10px', maxWidth: '220px' }}
+        title={'Repeat flow (per virtual user)'}>
+        <Input type={'number'} min={1} value={scenario.repeat || 1}
+          onChange={(evt) => onChangeValue('repeat', evt.target.value)} placeholder={'1'} />
       </TitleInput>}
       <TitleInput style={{ marginTop: '10px' }} title={'Before Scenario'}>
         <ProcessorsDropDown options={processorsExportedFunctions}

@@ -666,6 +666,7 @@ export class TestForm extends React.Component {
                           onChangeValueOfScenario={this.onChangeValueOfScenario}
                           processorsExportedFunctions={processorsExportedFunctions}
                           showEngine={this.state.testEngine === ENGINE_MIXED}
+                          isKafkaScenario={this.scenarioEngine(tabData) === 'kafka'}
                           engineValue={this.scenarioEngine(tabData)}
                           onChangeEngine={(value) => this.onChangeScenarioEngine(index - (this.state.before ? 1 : 0), value)}
                           onDeleteScenario={scenarios.length === 1 ? undefined : this.onDeleteScenario}

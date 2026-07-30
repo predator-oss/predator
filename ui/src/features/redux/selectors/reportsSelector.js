@@ -95,6 +95,8 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
 
   return reports.map((report) => {
     const latencyGraph = [];
+    const throughputGraph = [];
+    const kafkaLatencyGraph = [];
     const consumerLagGraph = [];
     const consumerLagPartitionsGraph = [];
     const errorsCodeGraph = [];
@@ -106,6 +108,11 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
     const benchMark = {};
     const assertionsTable = { rows: [], headers: [] };
     let errorsCodeGraphKeysAsObjectAcc = {};
+    let totalKafkaSent = 0;
+    let totalHttpRequests = 0;
+    let totalUnattributed = 0;
+    const kafkaTopicsAcc = {};
+    let prevBucketSeconds = 0;
     const consumerLagGroupsAcc = {};
     const consumerLagPartitionsAcc = {};
 
@@ -136,6 +143,66 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
           [`${prefix}mean`]: bucket.rps.mean,
           ...lastBenchmark.rps
         });
+
+        // Split throughput by protocol. requestsCompleted counts every completed
+        // operation (the runner folds kafka sends into it); subtracting the kafka
+        // counter recovers the pure http count, so mixed tests chart two honest
+        // series on one axis instead of one unlabeled sum.
+        //
+        // http is only claimed when this bucket actually observed http responses
+        // (status codes or errors). Without that guard a report whose kafka
+        // counter is missing attributes every kafka message to http — which is
+        // exactly what a parallel run used to do before counters were aggregated.
+        const counters = bucket.counters || {};
+        const kafkaSent = counters['kafka.messages_sent'] || 0;
+        // Per-topic sends (kafka.messages_sent.<topic>) chart one series per
+        // topic, so a test spanning several topics shows where the load landed.
+        const perTopic = {};
+        Object.keys(counters).forEach((k) => {
+          if (k.indexOf('kafka.messages_sent.') === 0) {
+            perTopic[k.slice('kafka.messages_sent.'.length)] = counters[k];
+          }
+        });
+        const httpResponses = Object.values(bucket.codes || {}).reduce((a, b) => a + b, 0) +
+          Object.values(bucket.errors || {}).reduce((a, b) => a + b, 0);
+        const httpRequests = httpResponses > 0
+          ? Math.max(httpResponses, (bucket.requestsCompleted || 0) - kafkaSent)
+          : 0;
+        totalKafkaSent += kafkaSent;
+        totalHttpRequests += httpRequests;
+        const windowSeconds = Math.max(1, bucket.bucket - prevBucketSeconds);
+        prevBucketSeconds = bucket.bucket;
+        const unattributed = Math.max(0, (bucket.requestsCompleted || 0) - kafkaSent - httpRequests);
+        totalUnattributed += unattributed;
+        const perSecond = (n) => Math.round((n / windowSeconds) * 100) / 100;
+        const topicPoint = {};
+        Object.keys(perTopic).forEach((topic) => {
+          const series = `${prefix}kafka: ${topic}`;
+          topicPoint[series] = perSecond(perTopic[topic]);
+          kafkaTopicsAcc[series] = (kafkaTopicsAcc[series] || 0) + perTopic[topic];
+        });
+        throughputGraph.push({
+          name: buildDateFormat(time),
+          timeMills,
+          [`${prefix}http`]: perSecond(httpRequests),
+          // The generic kafka series is the fallback for runners older than
+          // per-topic counters; with them, the per-topic series carry the data.
+          [`${prefix}kafka`]: perSecond(kafkaSent),
+          [`${prefix}other`]: perSecond(unattributed),
+          ...topicPoint,
+          ...lastBenchmark.rps
+        });
+
+        const publish = (bucket.summaries || {})['kafka.publish_latency'];
+        if (publish) {
+          kafkaLatencyGraph.push({
+            name: buildDateFormat(time),
+            timeMills,
+            [`${prefix}median`]: publish.median && publish.median.toFixed(),
+            [`${prefix}p95`]: publish.p95 && publish.p95.toFixed(),
+            [`${prefix}p99`]: publish.p99 && publish.p99.toFixed()
+          });
+        }
 
         const summaries = bucket.summaries || {};
         const lagKeys = Object.keys(summaries).filter((k) => k.indexOf('kafka.consumer_lag_total') === 0);
@@ -173,7 +240,8 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
         });
       });
     }
-    const graphsToPad = [latencyGraph, rps, errorsCodeGraph];
+    const graphsToPad = [latencyGraph, rps, throughputGraph, errorsCodeGraph];
+    if (kafkaLatencyGraph.length) graphsToPad.push(kafkaLatencyGraph);
     if (consumerLagGraph.length) graphsToPad.push(consumerLagGraph);
     if (consumerLagPartitionsGraph.length) graphsToPad.push(consumerLagPartitionsGraph);
     addStartEndTimeToGraphs(graphsToPad, startDate, endDate);
@@ -200,6 +268,24 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
     const alias = prefix.substring(0, 1);
 
     const latencyGraphKeys = [`${prefix}median`, `${prefix}p95`, `${prefix}p99`];
+    const kafkaLatencyGraphKeys = [`${prefix}median`, `${prefix}p95`, `${prefix}p99`];
+    const hasKafka = totalKafkaSent > 0;
+    const hasHttp = totalHttpRequests > 0;
+    // Only chart the protocols that actually ran; a kafka-only report gets no
+    // phantom zero-line http series and vice versa.
+    const kafkaTopicKeys = Object.keys(kafkaTopicsAcc).sort();
+    const throughputGraphKeys = [];
+    if (hasHttp) throughputGraphKeys.push(`${prefix}http`);
+    // Per-topic series replace the rolled-up kafka line when they exist: the
+    // total is their sum, so charting both would double-count the axis.
+    if (kafkaTopicKeys.length) {
+      throughputGraphKeys.push(...kafkaTopicKeys);
+    } else if (hasKafka) {
+      throughputGraphKeys.push(`${prefix}kafka`);
+    }
+    // Ops that belong to neither bucket (an engine whose counter did not reach
+    // the aggregate) are charted honestly as 'other' rather than mislabelled.
+    if (totalUnattributed > 0) throughputGraphKeys.push(`${prefix}other`);
     const rpsKeys = [`${prefix}mean`];
     const errorsBarKeys = [`${prefix}count`];
 
@@ -211,6 +297,7 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
     if (Object.keys(lastBenchmark).length > 0) {
       latencyGraphKeys.push(...lastBenchmark.latencyKeys);
       rpsKeys.push(...lastBenchmark.rpsKeys);
+      throughputGraphKeys.push(...lastBenchmark.rpsKeys);
       errorsBarKeys.push('benchmark_count');
     }
     const consumerLagGraphKeys = Object.keys(consumerLagGroupsAcc);
@@ -218,14 +305,25 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
     const consumerLagPartitionsGraphKeys = Object.keys(consumerLagPartitionsAcc).sort();
     const consumerLagPartitionsGraphMax = findMaxY(consumerLagPartitionsGraph, consumerLagPartitionsGraphKeys);
     const latencyGraphMax = findMaxY(latencyGraph, latencyGraphKeys);
+    const kafkaLatencyGraphMax = findMaxY(kafkaLatencyGraph, kafkaLatencyGraphKeys);
+    const throughputGraphMax = findMaxY(throughputGraph, throughputGraphKeys);
     const rpsGraphMax = findMaxY(rps, rpsKeys);
     const errorsGraphMax = findMaxY(errorsCodeGraph, errorsCodeGraphKeys);
 
     return {
       alias,
+      hasHttp,
+      hasKafka,
       latencyGraph,
       latencyGraphKeys,
       latencyGraphMax,
+      throughputGraph,
+      throughputGraphKeys,
+      throughputGraphMax,
+      kafkaTopicKeys,
+      kafkaLatencyGraph,
+      kafkaLatencyGraphKeys,
+      kafkaLatencyGraphMax,
       consumerLagGraph,
       consumerLagGraphKeys,
       consumerLagGraphMax,

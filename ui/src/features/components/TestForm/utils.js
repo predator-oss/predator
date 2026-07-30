@@ -28,7 +28,9 @@ export const createTestRequest = (data) => {
       engine: scenarioIsKafka(scenario) ? 'kafka' : undefined,
       beforeScenario: scenario.beforeScenario,
       afterScenario: scenario.afterScenario,
-      flow: scenarioIsKafka(scenario) ? prepareKafkaFlow(scenario.steps) : prepareFlow(scenario.steps),
+      flow: scenarioIsKafka(scenario)
+        ? withRepeat(prepareKafkaFlow(scenario.steps), scenario.repeat)
+        : prepareFlow(scenario.steps),
       additionalInfo: scenario.additionalInfo.isEnable ? scenario.additionalInfo.body : undefined
     }
   });
@@ -77,6 +79,15 @@ export const createTestRequest = (data) => {
     is_favorite: isFavorite
   }
 };
+
+// The kafka engine repeats steps via {loop: [...], count: n}. The form models
+// that as one scenario-level Repeat rather than a nested step tree, because a
+// loop over the whole flow ("each virtual user sends n messages") is the shape
+// load tests actually use.
+function withRepeat(flow, repeat) {
+  const count = parseInt(repeat, 10);
+  return (count > 1 && flow.length) ? [{ loop: flow, count }] : flow;
+}
 
 function prepareKafkaFlow(steps) {
   return steps.map((step) => {
@@ -162,10 +173,18 @@ function testScenarioToTestScenario(testScenarios, isKafka, isMixed) {
       afterScenario: scenario.afterScenario,
       weight: scenario.weight,
       additionalInfo: { body: scenario.additionalInfo, isEnable: !!scenario.additionalInfo },
-      steps: scenarioIsKafka ? buildKafkaStepsFromFlow(scenario.flow) : buildStepsFromFlow(scenario.flow)
+      repeat: scenarioIsKafka ? loopCount(scenario.flow) : undefined,
+      steps: scenarioIsKafka ? buildKafkaStepsFromFlow(unwrapLoop(scenario.flow)) : buildStepsFromFlow(scenario.flow)
     }
   })
 }
+
+// A flow that is exactly one loop round-trips as steps + Repeat. Any other
+// shape is left alone, so an api-authored flow the form cannot express is
+// still rendered step by step rather than silently emptied.
+const isWholeFlowLoop = (flow) => Array.isArray(flow) && flow.length === 1 && Array.isArray(flow[0].loop);
+const unwrapLoop = (flow) => isWholeFlowLoop(flow) ? flow[0].loop : flow;
+const loopCount = (flow) => isWholeFlowLoop(flow) ? (flow[0].count || 1) : undefined;
 
 function buildKafkaStepsFromFlow(flow) {
   if (!flow) return [];
