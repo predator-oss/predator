@@ -69,7 +69,7 @@ export default class CollapsibleScenarioConfig extends React.Component {
         const {processorsExportedFunctions,currentScenarioIndex,scenario,onChangeValueOfScenario,allowedWeight,showEngine,engineValue,onChangeEngine } = this.props;
         return (
             <div style={{padding: '10px'}}>
-                <AddScenarioForm allowedWeight={allowedWeight}
+                <AddScenarioForm isKafkaScenario={this.props.isKafkaScenario} allowedWeight={allowedWeight}
                                  key={currentScenarioIndex}
                                  scenario={scenario} onChangeValue={onChangeValueOfScenario}
                                  showEngine={showEngine} engineValue={engineValue} onChangeEngine={onChangeEngine}

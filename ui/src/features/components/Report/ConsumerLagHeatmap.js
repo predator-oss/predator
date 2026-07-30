@@ -3,10 +3,40 @@ import React, { useMemo, useState } from 'react';
 // Lag per partition is a magnitude, not an identity: dozens of partitions as
 // coloured lines is unreadable spaghetti with a legend the size of the chart.
 // A heatmap — rows grouped by topic, columns by time, cell shade by lag —
-// scales to any partition count with no legend at all. Shade is a sequential
-// single-hue ramp mixed against the plot surface, so it is theme-aware for free.
-const cellColor = (ratio) =>
-  `color-mix(in oklab, var(--series-1) ${Math.round(8 + 92 * ratio)}%, var(--plot-surface))`;
+// scales to any partition count.
+//
+// Colour is anchored to ABSOLUTE lag, never to the run's own maximum. Shading
+// by relative max would paint the worst cell of a perfectly healthy run — three
+// messages behind — in the same alarming colour as one that is 200k behind, so
+// the chart would cry wolf on every green run and mean nothing across runs.
+// With fixed thresholds a red cell always means the same thing, and two reports
+// can be compared side by side.
+//
+// Bands use the reserved status ramp (held → strain → breach), and each band
+// still shades light→dark inside itself so magnitude stays readable. Lightness
+// is monotonic across the whole scale, which keeps it legible for colour-vision
+// deficiency; the band name is also printed in the legend and every tooltip, so
+// status is never carried by colour alone.
+const STRAIN_THRESHOLD = 1000;   // messages behind: consumer is falling behind
+const BREACH_THRESHOLD = 10000;  // messages behind: consumer cannot keep up
+
+const BANDS = [
+  { name: 'holding', hue: 'var(--held-500)', min: 0, max: STRAIN_THRESHOLD },
+  { name: 'straining', hue: 'var(--strain-500)', min: STRAIN_THRESHOLD, max: BREACH_THRESHOLD },
+  { name: 'breached', hue: 'var(--breach-500)', min: BREACH_THRESHOLD, max: Infinity }
+];
+
+const bandOf = (value) => BANDS.find((b) => value < b.max) || BANDS[BANDS.length - 1];
+
+const cellColor = (value, max) => {
+  const band = bandOf(value);
+  // Depth within the band: linear up to the band ceiling, and for the open-ended
+  // breach band relative to the run's worst cell so a runaway still shows shape.
+  const ceiling = band.max === Infinity ? Math.max(max, BREACH_THRESHOLD * 2) : band.max;
+  const span = ceiling - band.min || 1;
+  const depth = Math.min(1, Math.max(0, (value - band.min) / span));
+  return `color-mix(in oklab, ${band.hue} ${Math.round(20 + 75 * depth)}%, var(--plot-surface))`;
+};
 
 const ROW_HEIGHT = 16;
 const LABEL_WIDTH = 64;
@@ -73,7 +103,7 @@ const ConsumerLagHeatmap = ({ data = [], keys = [] }) => {
                         setTooltip({
                           x: cell.left - container.left + cell.width / 2,
                           y: cell.top - container.top,
-                          text: `${topic}[${partition}] — ${value === undefined ? 'no data' : `${value} messages`} @ ${point.name}`
+                          text: `${topic}[${partition}] — ${value === undefined ? 'no data' : `${value.toLocaleString()} messages behind (${bandOf(value).name})`} @ ${point.name}`
                         });
                       }}
                       onMouseLeave={() => setTooltip(null)}
@@ -82,7 +112,7 @@ const ConsumerLagHeatmap = ({ data = [], keys = [] }) => {
                         borderRadius: '2px',
                         background: value === undefined
                           ? 'transparent'
-                          : cellColor(value / max),
+                          : cellColor(value, max),
                         boxShadow: value === undefined ? 'inset 0 0 0 1px var(--plot-grid)' : 'none'
                       }}
                     />
@@ -107,21 +137,28 @@ const ConsumerLagHeatmap = ({ data = [], keys = [] }) => {
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '8px',
+        flexWrap: 'wrap',
+        gap: '14px',
         marginTop: '12px',
         marginLeft: `${LABEL_WIDTH}px`,
         fontFamily: 'var(--font-mono)',
         fontSize: '10px',
         color: 'var(--fg-secondary)'
       }}>
-        <span>0</span>
-        <div style={{
-          width: '120px',
-          height: '8px',
-          borderRadius: '4px',
-          background: `linear-gradient(to right, ${cellColor(0)}, ${cellColor(1)})`
-        }} />
-        <span>{max.toLocaleString()} messages</span>
+        {BANDS.map((band) => (
+          <span key={band.name} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <span style={{
+              width: '22px',
+              height: '8px',
+              borderRadius: '2px',
+              background: `linear-gradient(to right, ${cellColor(band.min, max)}, ${cellColor(band.max === Infinity ? Math.max(max, BREACH_THRESHOLD * 2) : band.max - 1, max)})`
+            }} />
+            {band.name} {band.max === Infinity
+              ? `≥ ${BREACH_THRESHOLD.toLocaleString()}`
+              : `< ${band.max.toLocaleString()}`}
+          </span>
+        ))}
+        <span>peak {max.toLocaleString()} messages behind</span>
       </div>
 
       {tooltip && (
