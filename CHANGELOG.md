@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.11.1](https://github.com/predator-oss/predator/compare/v1.11.0...v1.11.1) (2026-07-30)
+
+
+### Bug Fixes
+
+* **ui:** keep the lag heatmap tooltip inside the chart ([#18](https://github.com/predator-oss/predator/issues/18)) ([6c32ff9](https://github.com/predator-oss/predator/commit/6c32ff914449a2268ed65bdbc8a2db2584f1e272))
+
 ## [1.11.0](https://github.com/predator-oss/predator/compare/v1.10.2...v1.11.0) (2026-07-30)
 
 ### [1.10.2](https://github.com/predator-oss/predator/compare/v1.10.1...v1.10.2) (2026-07-30)
