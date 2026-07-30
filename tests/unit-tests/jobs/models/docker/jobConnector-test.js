@@ -128,6 +128,16 @@ describe('Docker job connector tests', function () {
             }
         });
 
+        it('DOCKER_NETWORK set - containers join that network', async () => {
+            jobConnector.__set__('dockerConfig', { network: 'predator-kafka' });
+            dockerJobConfig.parallelism = 1;
+
+            await jobConnector.runJob(dockerJobConfig);
+
+            createContainerStub.args[0][0].HostConfig.should.eql({ NetworkMode: 'predator-kafka' });
+            jobConnector.__set__('dockerConfig', {});
+        });
+
         it('Pull fails but the image exists locally - job still runs', async () => {
             followProgressStub.yields(new Error('pull access denied'));
             imageInspectStub.resolves({ Id: 'sha256:local' });

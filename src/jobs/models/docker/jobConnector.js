@@ -65,7 +65,10 @@ const startContainer = async (dockerImage, jobName, reportId, parallelIndex, env
     const container = await docker.createContainer({
         name: `${jobName}-${reportId}-${parallelIndex}`,
         Image: dockerImage,
-        Env: envVarArray
+        Env: envVarArray,
+        // runners must share a network with whatever they load (e.g. kafka brokers);
+        // the default bridge has no DNS for user-defined-network aliases
+        ...(dockerConfig.network && { HostConfig: { NetworkMode: dockerConfig.network } })
     });
 
     await container.start();

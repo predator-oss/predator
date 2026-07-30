@@ -17,9 +17,11 @@ Settings page in the UI, or through `PUT /v1/config`. SSL and SASL are supported
 For the full list of keys please refer to: <u>[Kafka configuration manual](configuration.md#kafka-load-testing)</u>.
 
 !!! WARNING
-    The brokers must be reachable **from the runner's network** — e.g. inside the same
-    docker network or Kubernetes cluster as the predator-runner containers, not just from
-    where the Predator server runs.
+    The brokers must be reachable **from the runner's network** — not just from where the
+    Predator server runs (the form's broker status is checked by the server). On the
+    DOCKER platform set `DOCKER_NETWORK` to the docker network the brokers live on, or
+    use a broker address that resolves everywhere (e.g. a `host.docker.internal` listener).
+    On Kubernetes, runners run inside the cluster, so an in-cluster service address works.
 
 Once configured, Predator can discover the cluster:
 
