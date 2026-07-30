@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.10.1](https://github.com/predator-oss/predator/compare/v1.10.0...v1.10.1) (2026-07-30)
+
+
+### Bug Fixes
+
+* **ui:** consumer lag legend overflow + partition heatmap ([#16](https://github.com/predator-oss/predator/issues/16)) ([9d824b2](https://github.com/predator-oss/predator/commit/9d824b2775b92a422a53f18a626123903da55039))
+
 ## [1.10.0](https://github.com/predator-oss/predator/compare/v1.9.0...v1.10.0) (2026-07-30)
 
 ## [1.9.0](https://github.com/predator-oss/predator/compare/v1.8.4...v1.9.0) (2026-07-30)
