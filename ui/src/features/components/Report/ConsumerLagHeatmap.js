@@ -37,7 +37,8 @@ const ConsumerLagHeatmap = ({ data = [], keys = [] }) => {
 
   if (!columns.length) return null;
 
-  const tickIndexes = [0, Math.floor((columns.length - 1) / 2), columns.length - 1];
+  // dedup: with < 3 columns the three anchors collide (duplicate react keys)
+  const tickIndexes = [...new Set([0, Math.floor((columns.length - 1) / 2), columns.length - 1])];
 
   return (
     <div data-heatmap style={{ position: 'relative', width: '100%', padding: '4px 30px 0 0' }}>
