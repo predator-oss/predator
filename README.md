@@ -22,8 +22,8 @@ It has a simple, one-click installation, built with support for Kubernetes, DC/O
 |--------------------------------|:------------------:|:---------|
 | Distributed Load               | :sparkle:          |Predator supports an unlimited number of load generators that produce multiple load runners concurrently.
 | Functional Testing             | :new:              |Run functional tests with various types of assertions and later on see the results in the report page.
-| Kafka Load Testing             | :new:              |Produce-side load against Kafka clusters with topic discovery, mixed HTTP+Kafka tests and consumer-lag charts in the report.
-| MCP Server                     | :new:              |Drive Predator from AI assistants: author tests, run them and read reports through the bundled [MCP server](mcp/README.md).
+| Kafka Load Testing             | :new:              |Produce-side load against Kafka clusters with topic discovery, mixed HTTP+Kafka tests and [consumer-lag charts](https://predator-oss.github.io/predator/kafkatesting.html) in the report.
+| MCP Server                     | :new:              |Drive Predator from AI assistants: author tests, run them and read reports through the bundled [MCP server](https://predator-oss.github.io/predator/mcp.html).
 | Streaming Integration          | :new:              |Produce predator resources to Kafka easily and seamlessly.
 | Rich UI                        | :sparkle:          |Predator offers a rich UI where you can write tests, run them and compare results.
 | Reports && Tests Persistence   | :sparkle:          |Predator provides out-of-the box functionality for persisting data in Postgres, MySQL, MSSQL and SQLITE.
