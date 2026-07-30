@@ -63,6 +63,7 @@ Additional parameters for the following chosen databases:
 |----------------------	|-----------------------------------------------------------	|--------------------------	|---------------	|
 | DOCKER_HOST          	| Docker engine url (host and port number of docker engine) 	| x                        	|               	|
 | DOCKER_CERT_PATH     	| Path to CA certificate directory                          	| x                        	|               	|
+| DOCKER_NETWORK       	| Docker network the runner containers join — required when the system under test (e.g. kafka brokers) is only reachable on a user-defined network 	| x 	| default bridge 	|
 
 ## Streaming
 | Environment Variable 	| Description                                                          	| Configurable from UI/API 	| Default value 	|
