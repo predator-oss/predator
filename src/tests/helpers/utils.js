@@ -21,10 +21,13 @@ function addDefaultsToTest(artilleryTest) {
     return artilleryTest;
 }
 
+const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'];
+
 function addDefaultsToStep(step) {
     if (step){
         const method = Object.keys(step)[0];
-        if (method){
+        // non-http steps (kafka produce, think, log, ...) have no url to default
+        if (HTTP_METHODS.includes(method)){
             step[method].url = step[method].url || '/';
         }
     }

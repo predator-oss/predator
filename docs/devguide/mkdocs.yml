@@ -14,6 +14,7 @@ nav:
   - Processor Creation: processors.md
   - Benchmarks: benchmarks.md
   - Webhooks: webhooks.md
+  - Kafka Load Testing: kafkatesting.md
   - Streaming Platforms: streaming.md
   - Schedules and Reports: schedulesandreports.md
   - Plugins: plugins.md

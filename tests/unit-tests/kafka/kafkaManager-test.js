@@ -42,6 +42,13 @@ describe('Kafka manager', function () {
         groups.should.eql(['analytics', 'billing']);
     });
 
+    it('brokers override skips the configured brokers', async () => {
+        getConfigStub.resolves(undefined);
+        const topics = await kafkaManager.getTopics('other:9092');
+        topics.should.eql(['orders', 'payments']);
+        getConfigStub.calledWith('kafka_brokers').should.eql(false);
+    });
+
     it('422 when kafka is not configured', async () => {
         getConfigStub.resolves(undefined);
         try {

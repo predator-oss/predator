@@ -276,6 +276,47 @@ describe('Artillery report generator test', () => {
         });
     });
 
+    describe('Engine-custom summaries aggregation (kafka consumer lag)', function () {
+        const baseStats = (overrides) => ({
+            bucket: 15,
+            concurrency: 1,
+            requestsCompleted: 10,
+            scenariosCreated: 10,
+            scenariosAvoided: 0,
+            scenariosCompleted: 10,
+            pendingRequests: 0,
+            latency: { median: 1, max: 2, min: 1, p95: 2, p99: 2 },
+            scenarioDuration: { median: 1, max: 2, min: 1, p95: 2, p99: 2 },
+            rps: { mean: 10, count: 10 },
+            scenarioCounts: {},
+            codes: {},
+            errors: {},
+            assertions: {},
+            summaries: {},
+            ...overrides
+        });
+
+        it('keeps the sample with the highest max per summary instead of summing duplicates', () => {
+            const createAggregateManually = aggregateReportManager.__get__('createAggregateManually');
+            const aggregate = createAggregateManually([
+                baseStats({ summaries: { 'kafka.consumer_lag_billing': { min: 0, max: 120, median: 50 } } }),
+                baseStats({ summaries: { 'kafka.consumer_lag_billing': { min: 5, max: 300, median: 80 }, 'kafka.consumer_lag_analytics': { min: 0, max: 7, median: 2 } } }),
+                baseStats({ summaries: { 'kafka.consumer_lag_billing': { min: 1, max: 90, median: 40 } } })
+            ]);
+
+            should(aggregate.summaries).deepEqual({
+                'kafka.consumer_lag_billing': { min: 5, max: 300, median: 80 },
+                'kafka.consumer_lag_analytics': { min: 0, max: 7, median: 2 }
+            });
+        });
+
+        it('summaries stay empty when runners report none', () => {
+            const createAggregateManually = aggregateReportManager.__get__('createAggregateManually');
+            const aggregate = createAggregateManually([baseStats(), baseStats()]);
+            should(aggregate.summaries).deepEqual({});
+        });
+    });
+
     describe('Bad flows - With parallelism', function () {
         it('create final report fails when sequelize returns error', async () => {
             databaseConnectorGetStatsStub.rejects(new Error('Database failure'));

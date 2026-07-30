@@ -770,7 +770,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error_response'
-  /v1/jobs/containers/:
+  /v1/jobs/runs/containers:
     parameters:
       - $ref: '#/components/parameters/context_id'
     delete:
@@ -926,6 +926,38 @@ paths:
                 $ref: '#/components/schemas/error_response'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error_response'
+  /v1/tests/{test_id}/reports/{report_id}/aggregate:
+    parameters:
+      - $ref: '#/components/parameters/context_id'
+    get:
+      operationId: retrieve-an-aggregated-report
+      tags:
+        - Reports
+      summary: Retrieve an aggregated Report
+      description: Retrieve a report with its stats aggregated across all runners, including engine-custom summaries such as kafka consumer lag.
+      parameters:
+        - in: path
+          name: test_id
+          required: true
+          description: The id of the test for which to retrieve the report.
+          schema:
+            type: string
+            example: 81a27853-0db5-4e57-ad63-4b637528398a
+        - in: path
+          name: report_id
+          description: The id of the report to aggregate.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+        '404':
+          description: Not found
           content:
             application/json:
               schema:
@@ -1226,7 +1258,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error_response'
-  /v1/{test_id}/reports/{report_id}/export/{file_format}:
+  /v1/tests/{test_id}/reports/{report_id}/export/{file_format}:
     parameters:
       - $ref: '#/components/parameters/context_id'
     get:

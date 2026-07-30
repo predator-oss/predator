@@ -5,7 +5,8 @@ const rewire = require('rewire');
 const jobConnector = rewire('../../../../../src/jobs/models/docker/jobConnector');
 describe('Docker job connector tests', function () {
     let sandbox, createContainerStub, listContainersStub, getContainerStub, containerStopStub,
-        containerLogsStub, startContainerStub, pullStub, modemStub, followProgressStub;
+        containerLogsStub, startContainerStub, pullStub, modemStub, followProgressStub,
+        getImageStub, imageInspectStub;
 
     const dockerJobConfig = {
         environmentVariables: {
@@ -48,10 +49,14 @@ describe('Docker job connector tests', function () {
             followProgress: followProgressStub
         };
 
+        imageInspectStub = sandbox.stub().rejects(new Error('no such image'));
+        getImageStub = sandbox.stub().callsFake(() => ({ inspect: imageInspectStub }));
+
         jobConnector.__set__('docker', {
             createContainer: createContainerStub,
             listContainers: listContainersStub,
             getContainer: getContainerStub,
+            getImage: getImageStub,
             pull: pullStub,
             modem: modemStub
         });
@@ -120,6 +125,30 @@ describe('Docker job connector tests', function () {
                 throw new Error('Should not get here');
             } catch (error) {
                 error.should.eql(new Error('Failure pulling image'));
+            }
+        });
+
+        it('Pull fails but the image exists locally - job still runs', async () => {
+            followProgressStub.yields(new Error('pull access denied'));
+            imageInspectStub.resolves({ Id: 'sha256:local' });
+
+            const jobResponse = await jobConnector.runJob(dockerJobConfig);
+            jobResponse.should.eql({
+                id: 'reportId',
+                jobName: 'jobName'
+            });
+            getImageStub.calledWith('image').should.eql(true);
+            createContainerStub.callCount.should.be.aboveOrEqual(1);
+        });
+
+        it('Pull fails and the image is not local - original pull error thrown', async () => {
+            followProgressStub.yields(new Error('pull access denied'));
+
+            try {
+                await jobConnector.runJob(dockerJobConfig);
+                throw new Error('Should not get here');
+            } catch (error) {
+                error.message.should.eql('pull access denied');
             }
         });
 
