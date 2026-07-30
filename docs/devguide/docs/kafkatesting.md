@@ -1,5 +1,5 @@
 # Kafka Load Testing
-!!! TIP "Supported from version ghcr.io/predator-oss/predator:1.8.4"
+!!! TIP "Supported from version ghcr.io/predator-oss/predator:1.9.0"
 
 Predator can generate produce-side load against a Kafka cluster, monitor the lag of the
 consumer groups reading from it, and chart that lag in the run's report — alongside the
