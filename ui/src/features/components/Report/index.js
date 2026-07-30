@@ -10,6 +10,7 @@ import dateFormat from 'dateformat';
 import Button from '../../../components/Button';
 import Snackbar from 'material-ui/Snackbar';
 import { BarChartPredator, LineChartPredator, AssertionsReport } from './Charts';
+import ConsumerLagHeatmap from './ConsumerLagHeatmap';
 import _ from 'lodash';
 import Checkbox from '../../../components/Checkbox/Checkbox';
 import Card from '../../../components/Card';
@@ -197,15 +198,9 @@ class Report extends React.Component {
                 {aggregateReport.consumerLagPartitionsGraph && aggregateReport.consumerLagPartitionsGraph.length > 0 &&
                 <Card style={{ display: 'flex', flexDirection: 'column', marginBottom: '15px' }}>
                   <h3 className='report-chart-title'>Consumer Lag by Partition</h3>
-                  <LineChartPredator
+                  <ConsumerLagHeatmap
                     data={aggregateReport.consumerLagPartitionsGraph}
                     keys={aggregateReport.consumerLagPartitionsGraphKeys}
-                    labelY={'messages'}
-                    graphType={'consumer_lag_partitions'}
-                    maxY={aggregateReport.consumerLagPartitionsGraphMax}
-                    onSelectedGraphPropertyFilter={this.onSelectedGraphPropertyFilter}
-                    filteredKeys={filteredKeys}
-                    referenceAreas={aggregateReport.referenceAreas}
                   />
                 </Card>}
                 <Card style={{

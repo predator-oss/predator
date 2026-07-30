@@ -2,7 +2,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Legend,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -87,6 +86,11 @@ export const TOOLTIP_PROPS = {
   cursor: { stroke: 'var(--border-strong)', strokeWidth: 1, strokeDasharray: '3 3' }
 };
 
+// The legend is rendered outside the ResponsiveContainer (which has a fixed
+// height): with many series (e.g. one per kafka partition) recharts' own
+// Legend overflows the SVG box and paints over the next chart.
+const legendPayload = (keys) => keys.map((key, index) => ({ value: key, color: getColor(key, index).stroke }));
+
 const filterKeysFromArrayOfObject = (data, graphType, filteredKeys) => {
   const keysToFilter = Object.keys(_.pickBy(filteredKeys[graphType] || {}, (value) => value));
   const filteredData = data.reduce((acc, cur) => {
@@ -103,41 +107,39 @@ export const BarChartPredator = ({ data = [], keys = [], graphType, onSelectedGr
   const filteredData = filterKeysFromArrayOfObject(data, graphType, filteredKeys);
 
   return (
-    <ResponsiveContainer width={'100%'} height={300}>
-      <BarChart
-        height={300}
-        data={filteredData}
-        margin={{
-          top: 20, right: 30, left: 20, bottom: 5
-        }}
-      >
-        <CartesianGrid {...GRID_PROPS} />
-        <XAxis dataKey='name' {...AXIS_PROPS} />
-        <YAxis {...AXIS_PROPS} width={54} />
-        <Legend content={(props) => renderLegend({
-          ...props,
-          graphType,
-          onSelectedGraphPropertyFilter,
-          filteredKeys
-        })} />
-        <Tooltip {...TOOLTIP_PROPS} />
-        {
-          keys.map((key, index) => {
-            const color = getColor(key, index);
-            return (<Bar barSize={38} key={index} dataKey={key} fill={color.fill}
-              radius={[4, 4, 0, 0]} stroke='var(--plot-surface)' strokeWidth={2} />)
-          })
-        }
-      </BarChart>
-    </ResponsiveContainer>
+    <>
+      <ResponsiveContainer width={'100%'} height={300}>
+        <BarChart
+          height={300}
+          data={filteredData}
+          margin={{
+            top: 20, right: 30, left: 20, bottom: 5
+          }}
+        >
+          <CartesianGrid {...GRID_PROPS} />
+          <XAxis dataKey='name' {...AXIS_PROPS} />
+          <YAxis {...AXIS_PROPS} width={54} />
+          <Tooltip {...TOOLTIP_PROPS} />
+          {
+            keys.map((key, index) => {
+              const color = getColor(key, index);
+              return (<Bar barSize={38} key={index} dataKey={key} fill={color.fill}
+                radius={[4, 4, 0, 0]} stroke='var(--plot-surface)' strokeWidth={2} />)
+            })
+          }
+        </BarChart>
+      </ResponsiveContainer>
+      {renderLegend({ payload: legendPayload(keys), graphType, onSelectedGraphPropertyFilter, filteredKeys })}
+    </>
   )
 };
 
 export const LineChartPredator = ({ data = [], keys = [], labelY, maxY, graphType, onSelectedGraphPropertyFilter, filteredKeys, referenceAreas = {}, connectNulls = true }) => {
   const { experiments = [] } = referenceAreas;
   const filteredData = filterKeysFromArrayOfObject(data, graphType, filteredKeys);
-  return <ResponsiveContainer width='100%' height={300}>
-    <LineChart
+  return <>
+    <ResponsiveContainer width='100%' height={300}>
+      <LineChart
       width={700}
       height={400}
       data={filteredData}
@@ -158,12 +160,6 @@ export const LineChartPredator = ({ data = [], keys = [], labelY, maxY, graphTyp
           style: { textAnchor: 'middle', fill: 'var(--fg-secondary)', fontSize: 11 }
         }}
         domain={[0, Math.round(maxY * 1.1)]} />
-      <Legend content={(props) => renderLegend({
-        ...props,
-        graphType,
-        onSelectedGraphPropertyFilter,
-        filteredKeys
-      })} />
       {
         experiments.map((experiment, index) => {
           const key = `experiment-${index}`;
@@ -190,8 +186,10 @@ export const LineChartPredator = ({ data = [], keys = [], labelY, maxY, graphTyp
             stroke={color.stroke} />
         })
       }
-    </LineChart>
-  </ResponsiveContainer>
+      </LineChart>
+    </ResponsiveContainer>
+    {renderLegend({ payload: legendPayload(keys), graphType, onSelectedGraphPropertyFilter, filteredKeys })}
+  </>
 }
 
 const renderExperimentsReferenceLine = (experiment, index) => {
