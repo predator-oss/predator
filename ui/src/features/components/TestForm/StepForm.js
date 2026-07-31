@@ -123,8 +123,14 @@ export default (props) => {
     validationError
   } = props;
   const jsonObjectKey = step.method === 'GET' ? 'get' : 'not-get';
+  // Rendered one section at a time so the parent can lay the step out as tabs
+  // (Postman's model). Undefined section keeps the original single-scroll form,
+  // which the Before flow and sleep steps still use.
+  const section = props.section;
+  const show = (name) => !section || section === name;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+      {show('target') &&
       <div className={style['http-methods-request-options-wrapper']}>
         <RectangleAlignChildrenLeft className={style['rectangle-url-row']}>
           <TitleInput style={{ flex: 0, marginRight: '10px' }} width={'110px'} title={'Method'}>
@@ -174,33 +180,35 @@ export default (props) => {
           />
         </RectangleAlignChildrenLeft>
 
-      </div>
-      <RectangleAlignChildrenLeft />
-      <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-evenly' }}>
+      </div>}
+      {show('headers') &&
         <div>
-          <Header text={'Headers'} />
+          {!section && <Header text={'Headers'} />}
           <DynamicKeyValueInput value={step.headers} onAdd={onAddHeader} onDelete={onDeleteHeader}
             onChange={onHeaderChange} />
-        </div>
+        </div>}
+      {show('captures') &&
         <div>
-          <Header text={'Captures'} />
+          {!section && <Header text={'Captures'} />}
           <DynamicKeyValueInput value={step.captures} onChange={onCaptureChange} onAdd={onAddCapture}
             onDelete={onDeleteCapture}
             dropdownOptions={SUPPORTED_CAPTURE_TYPES}
             dropDownPlaceHolder={'Type'}
             dropDownOnChange={onChangeCaptureType}
           />
-
-        </div>
-      </div>
-      <RectangleAlignChildrenLeft style={{ alignItems: 'center', marginBottom: '11px' }}>
-        <Header text={'Body'} style={{ marginBottom: 0, marginRight: '5px' }} />
-        <ContentTypeList value={step.contentType} list={SUPPORTED_CONTENT_TYPES}
-          onChange={onChangeContentType} />
-      </RectangleAlignChildrenLeft>
-      <BodyEditor type={step.contentType} content={step.body} key={jsonObjectKey} onChange={onBodyChange} />
-      <Header style={{ marginTop: '11px' }} text={'Expectations'} />
-      <Expectations step={step} stepIndex={props.index} onChangeStep={props.onChangeValue} />
+        </div>}
+      {show('body') && <>
+        <RectangleAlignChildrenLeft style={{ alignItems: 'center', marginBottom: '11px' }}>
+          {!section && <Header text={'Body'} style={{ marginBottom: 0, marginRight: '5px' }} />}
+          <ContentTypeList value={step.contentType} list={SUPPORTED_CONTENT_TYPES}
+            onChange={onChangeContentType} />
+        </RectangleAlignChildrenLeft>
+        <BodyEditor type={step.contentType} content={step.body} key={jsonObjectKey} onChange={onBodyChange} />
+      </>}
+      {show('expectations') && <>
+        {!section && <Header style={{ marginTop: '11px' }} text={'Expectations'} />}
+        <Expectations step={step} stepIndex={props.index} onChangeStep={props.onChangeValue} />
+      </>}
     </div>
 
   )

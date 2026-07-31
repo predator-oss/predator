@@ -1,0 +1,122 @@
+.rail {
+  border-right: 1px solid var(--border-subtle);
+  background: var(--bg-sunken);
+  padding: var(--space-2) 0;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3) var(--space-2);
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.spacer { flex: 1; }
+
+.add {
+  border: 0;
+  background: none;
+  color: var(--fg-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: var(--radius-sm);
+
+  &:hover { background: var(--bg-hover); color: var(--fg-primary); }
+  &:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+}
+
+.node {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 5px var(--space-3);
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  color: var(--fg-primary);
+
+  &:hover { background: var(--bg-hover); }
+  &:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+}
+
+.scenario {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  margin-top: var(--space-2);
+}
+
+.step {
+  padding-left: var(--space-6);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.selected {
+  background: var(--accent-soft);
+  border-left-color: var(--accent);
+}
+
+.label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Protocol and method read as identity, not status, so they use the series/accent
+// families. Only genuinely destructive DELETE borrows the breach hue.
+.chip {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+}
+
+.get { background: var(--held-bg); color: var(--held-fg); }
+.post { background: var(--accent-soft); color: var(--accent-fg); }
+.put { background: var(--strain-bg); color: var(--strain-fg); }
+.del { background: var(--breach-bg); color: var(--breach-fg); }
+.produce { background: var(--accent-soft); color: var(--series-6); }
+.wait { background: var(--bg-active); color: var(--fg-secondary); }
+
+.pill {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 9px;
+  background: var(--bg-active);
+  color: var(--fg-secondary);
+}
+
+.remove {
+  flex: none;
+  border: 0;
+  background: none;
+  color: var(--fg-muted);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 0 3px;
+  border-radius: var(--radius-sm);
+  opacity: 0;
+
+  &:hover { color: var(--breach-fg); background: var(--breach-bg); }
+  &:focus-visible { opacity: 1; outline: 2px solid var(--focus-ring); }
+}
+
+.node:hover .remove { opacity: 1; }

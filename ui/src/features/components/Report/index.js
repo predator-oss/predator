@@ -215,6 +215,7 @@ class Report extends React.Component {
                   <ConsumerLagHeatmap
                     data={aggregateReport.consumerLagPartitionsGraph}
                     keys={aggregateReport.consumerLagPartitionsGraphKeys}
+                    meta={aggregateReport.consumerLagPartitionsMeta}
                   />
                 </Card>}
                 <Card style={{
