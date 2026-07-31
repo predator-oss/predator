@@ -112,7 +112,6 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
     let totalHttpRequests = 0;
     let totalUnattributed = 0;
     const kafkaTopicsAcc = {};
-    let prevBucketSeconds = 0;
     const consumerLagGroupsAcc = {};
     const consumerLagPartitionsAcc = {};
     const consumerLagPartitionsMeta = {};
@@ -128,7 +127,13 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
     if (report.intermediates && report.intermediates.length) {
       report.intermediates.forEach((bucket, index) => {
         const latency = bucket.latency;
-        const time = new Date(startTime + (bucket.bucket * 1000));
+        // A runner posts every statsInterval (10s by default) while predator labels
+        // each post with a 30s bucket, so three posts share one bucket and stacked
+        // on a single x position. The post's own timestamp spreads them correctly.
+        // Compare mode keeps bucket offsets so two reports still line up.
+        const time = (!startFromZeroTime && bucket.timestamp)
+          ? new Date(bucket.timestamp)
+          : new Date(startTime + (bucket.bucket * 1000));
         const timeMills = time.getTime();
         latencyGraph.push({
           name: buildDateFormat(time),
@@ -172,11 +177,16 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
           : 0;
         totalKafkaSent += kafkaSent;
         totalHttpRequests += httpRequests;
-        const windowSeconds = Math.max(1, bucket.bucket - prevBucketSeconds);
-        prevBucketSeconds = bucket.bucket;
         const unattributed = Math.max(0, (bucket.requestsCompleted || 0) - kafkaSent - httpRequests);
         totalUnattributed += unattributed;
-        const perSecond = (n) => Math.round((n / windowSeconds) * 100) / 100;
+        // The runner already measured the rate over its own wall clock. Splitting
+        // that by each protocol's share of the window beats recomputing a window
+        // length from bucket labels, which collapse to zero for same-bucket posts.
+        const windowOps = kafkaSent + httpRequests + unattributed;
+        const windowRate = (bucket.rps && bucket.rps.mean) || 0;
+        const perSecond = (n) => (windowOps > 0
+          ? Math.round((windowRate * n / windowOps) * 100) / 100
+          : 0);
         const topicPoint = {};
         Object.keys(perTopic).forEach((topic) => {
           const series = `${prefix}kafka: ${topic}`;
