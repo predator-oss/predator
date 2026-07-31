@@ -27,5 +27,5 @@ function generateBucketPath() {
 }
 
 function generatePredatorDocsUrl() {
-    return process.env.PREDATOR_DOCS_URL || 'https://zooz.github.io/predator';
+    return process.env.PREDATOR_DOCS_URL || 'https://predator-oss.github.io/predator';
 }

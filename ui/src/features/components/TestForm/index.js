@@ -13,10 +13,12 @@ import ProcessorsDropDown from './ProcessorsDropDown';
 import Tabs from '../../../components/Tabs/Tabs'
 import TitleInput from '../../../components/TitleInput';
 import TextArea from '../../../components/TextArea';
-import StepsList from './stepsList';
 import FormWrapper from '../../../components/FormWrapper';
 import ErrorWrapper from '../../../components/ErrorWrapper'
 import CollapsibleScenarioConfig from './collapsibleScenarioConfig';
+import StructureTree from './StructureTree';
+import StepTabs from './StepTabs';
+import builderStyle from './builderLayout.scss';
 import { FileDrop } from 'react-file-drop';
 import env from '../../../App/common/env';
 import { CONTENT_TYPES } from './constants'
@@ -607,14 +609,6 @@ export class TestForm extends React.Component {
 
       const currentCsvFile = csvFile || (csvMetadata ? { name: csvMetadata.filename } : undefined);
 
-      let tabsData;
-      if (before) {
-        tabsData = [before, ...scenarios];
-      } else {
-        tabsData = [...scenarios];
-      }
-
-      const activeTabKey = currentScenarioIndex === null ? before.id : scenarios[currentScenarioIndex] && scenarios[currentScenarioIndex].id;
       return (
         <>
           {/* bottom */}
@@ -643,62 +637,83 @@ export class TestForm extends React.Component {
           {csvMode &&
           <DragAndDrop csvMetadata={csvMetadata} csvFile={currentCsvFile}
             onDropFile={(file) => this.setState({ csvFile: file })} />}
-          <Tabs onTabChosen={(key) => this.onChooseScenario(key)} activeTabKey={activeTabKey}
-            className={style.tabs}>
-            {
-              tabsData.map((tabData, index) => {
-                return (
-                  <Tabs.TabPane style={{
-                    padding: '10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    flexDirection: 'column',
-                    flex: 1
-                  }} tab={tabData.scenario_name || 'Scenario'}
-                    key={tabData.id}>
-                    {
-                      !tabData.isBefore &&
-                      <div style={{ width: '80%' }}>
-
-                        <CollapsibleScenarioConfig
-                          allowedWeight={this.calcMaxAllowedWeight()}
-                          scenario={tabData}
-                          onChangeValueOfScenario={this.onChangeValueOfScenario}
-                          processorsExportedFunctions={processorsExportedFunctions}
-                          showEngine={this.state.testEngine === ENGINE_MIXED}
-                          isKafkaScenario={this.scenarioEngine(tabData) === 'kafka'}
-                          engineValue={this.scenarioEngine(tabData)}
-                          onChangeEngine={(value) => this.onChangeScenarioEngine(index - (this.state.before ? 1 : 0), value)}
-                          onDeleteScenario={scenarios.length === 1 ? undefined : this.onDeleteScenario}
-                          onDuplicateScenario={this.onDuplicateScenario}
-                        />
-                      </div>
-
-                    }
-                    <div style={{ width: '70%' }}>
-                      <StepsList
-                        steps={tabData.steps}
-                        editMode={editMode}
-                        testEngine={tabData.isBefore ? 'http' : this.scenarioEngine(tabData)}
-                        kafkaTopics={this.state.kafkaTopics}
-                        onChangeValueOfStep={this.onChangeValueOfStep}
-                        processorsExportedFunctions={processorsExportedFunctions}
-                        onDeleteStep={this.onDeleteStep}
-                        onDuplicateStep={this.onDuplicateStep}
-                        updateStepOrder={this.updateStepOrder}
-                        // validationError={validationErrors[URL_FIELDS.STEP].error} //todo
-                        validateUrl={() => {}} // todo temp
-                      />
-                    </div>
-
-                  </Tabs.TabPane>
-                )
-              })
-            }
-          </Tabs>
+          <div className={builderStyle.builder}>
+            <StructureTree
+              scenarios={scenarios}
+              before={this.state.before}
+              currentScenarioIndex={this.state.currentScenarioIndex}
+              currentStepIndex={this.state.currentStepIndex}
+              scenarioEngine={this.scenarioEngine}
+              showEngine={this.state.testEngine === ENGINE_MIXED}
+              onSelectBefore={() => this.setState({ currentScenarioIndex: null, currentStepIndex: null })}
+              onSelectScenario={(i) => this.setState({ currentScenarioIndex: i, currentStepIndex: null })}
+              onSelectStep={(scenarioIndex, stepIndex) =>
+                this.setState({ currentScenarioIndex: scenarioIndex, currentStepIndex: stepIndex })}
+              onAddScenario={this.addScenarioHandler}
+              onDeleteScenario={(i) => this.setState({ currentScenarioIndex: i, currentStepIndex: null }, this.onDeleteScenario)}
+              onDeleteStep={(scenarioIndex, stepIndex) =>
+                this.setState({ currentScenarioIndex: scenarioIndex, currentStepIndex: null },
+                  () => this.onDeleteStep(stepIndex))}
+            />
+            <div className={builderStyle.detail}>
+              {this.renderSelection(processorsExportedFunctions, scenarios)}
+            </div>
+          </div>
         </>
       )
     };
+
+    // What the right pane shows follows the tree selection: a scenario's own
+    // settings, or one step in focus. Nothing else is rendered, which is the
+    // whole point of the tree.
+    renderSelection (processorsExportedFunctions, scenarios) {
+      const { currentScenarioIndex, currentStepIndex, before } = this.state;
+      const isBefore = currentScenarioIndex === null;
+      const scenario = isBefore ? before : scenarios[currentScenarioIndex];
+
+      if (!scenario) {
+        return <div className={builderStyle.empty}>Select a scenario or step on the left.</div>;
+      }
+
+      if (currentStepIndex === null || !scenario.steps || !scenario.steps[currentStepIndex]) {
+        if (isBefore) {
+          return <div className={builderStyle.empty}>
+            Before runs once, ahead of the load. Pick one of its steps to edit, or add a step below.
+          </div>;
+        }
+        return (
+          <div className={builderStyle.scenarioPane}>
+            <CollapsibleScenarioConfig
+              allowedWeight={this.calcMaxAllowedWeight()}
+              scenario={scenario}
+              onChangeValueOfScenario={this.onChangeValueOfScenario}
+              processorsExportedFunctions={processorsExportedFunctions}
+              showEngine={this.state.testEngine === ENGINE_MIXED}
+              isKafkaScenario={this.scenarioEngine(scenario) === 'kafka'}
+              engineValue={this.scenarioEngine(scenario)}
+              onChangeEngine={(value) => this.onChangeScenarioEngine(currentScenarioIndex, value)}
+              onDeleteScenario={scenarios.length === 1 ? undefined : this.onDeleteScenario}
+              onDuplicateScenario={this.onDuplicateScenario}
+            />
+          </div>
+        );
+      }
+
+      const step = scenario.steps[currentStepIndex];
+      return (
+        <StepTabs
+          step={step}
+          index={currentStepIndex}
+          engine={isBefore ? 'http' : this.scenarioEngine(scenario)}
+          topics={this.state.kafkaTopics}
+          kafkaTopics={this.state.kafkaTopics}
+          processorsExportedFunctions={processorsExportedFunctions}
+          onChangeValue={this.onChangeValueOfStep}
+          onChangeValueOfStep={this.onChangeValueOfStep}
+          validateUrl={() => {}}
+        />
+      );
+    }
 
     onChangeValueOfScenario = (key, value) => {
       const { scenarios, currentScenarioIndex } = this.state;

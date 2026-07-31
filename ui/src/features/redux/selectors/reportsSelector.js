@@ -115,6 +115,8 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
     let prevBucketSeconds = 0;
     const consumerLagGroupsAcc = {};
     const consumerLagPartitionsAcc = {};
+    const consumerLagPartitionsMeta = {};
+    const knownGroups = [];
 
     const offset = startFromZeroTime ? new Date(report.start_time).getTime() : 0;
 
@@ -213,6 +215,7 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
             const group = k.slice('kafka.consumer_lag_total'.length).replace(/^\./, '') || 'lag';
             point[`${prefix}${group}`] = summaries[k].max;
             consumerLagGroupsAcc[`${prefix}${group}`] = true;
+            if (group !== 'lag' && knownGroups.indexOf(group) === -1) knownGroups.push(group);
           });
           consumerLagGraph.push(point);
         }
@@ -221,12 +224,24 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
         if (partitionKeys.length) {
           const point = { name: buildDateFormat(time), timeMills };
           partitionKeys.forEach((k) => {
-            // key is 'kafka.consumer_lag_partition.<group>.<topic>.<partition>'
+            // key is 'kafka.consumer_lag_partition.<group>.<topic>.<partition>'.
+            // Both group ids and topic names contain dots, so the boundary between
+            // them cannot be found by splitting alone - it rendered as one
+            // unreadable run like 'ludeo-player-staging.game.events.staging.game.events[1]'.
+            // The group names arrive in the same bucket as consumer_lag_total keys,
+            // so match against those to recover group, topic and partition.
             const rest = k.slice('kafka.consumer_lag_partition.'.length);
             const lastDot = rest.lastIndexOf('.');
+            const group = longestGroupMatch(knownGroups, rest);
             const series = `${prefix}${rest.slice(0, lastDot)}[${rest.slice(lastDot + 1)}]`;
             point[series] = summaries[k].max;
             consumerLagPartitionsAcc[series] = true;
+            if (!consumerLagPartitionsMeta[series]) {
+              const partition = rest.slice(lastDot + 1);
+              consumerLagPartitionsMeta[series] = group
+                ? { group, topic: rest.slice(group.length + 1, lastDot), partition }
+                : { group: undefined, topic: rest.slice(0, lastDot), partition };
+            }
           });
           consumerLagPartitionsGraph.push(point);
         }
@@ -329,6 +344,7 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
       consumerLagGraphMax,
       consumerLagPartitionsGraph,
       consumerLagPartitionsGraphKeys,
+      consumerLagPartitionsMeta,
       consumerLagPartitionsGraphMax,
       rpsGraphMax,
       errorsCodeGraph,
@@ -351,6 +367,13 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
       referenceAreas: referenceAreas
     }
   })
+}
+
+// One group id can be a prefix of another, so take the longest match rather than
+// the first one found.
+function longestGroupMatch (groups, rest) {
+  return groups.reduce((best, g) =>
+    (rest.indexOf(`${g}.`) === 0 && (!best || g.length > best.length)) ? g : best, undefined);
 }
 
 function findMaxY (data, keys) {

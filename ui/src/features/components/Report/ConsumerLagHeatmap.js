@@ -43,21 +43,28 @@ const EDGE_GAP = 4;
 const clamp = (value, min, max) => Math.min(Math.max(value, min), Math.max(min, max));
 const LABEL_WIDTH = 64;
 
-const parseRows = (keys) => {
+// Rows are grouped by consumer group and topic. Without meta the label is one
+// unreadable run of dots (both group ids and topic names contain them), so the
+// selector hands over the parsed parts and they are shown as separate fields.
+const parseRows = (keys, meta = {}) => {
   const groups = new Map();
   keys.forEach((key) => {
+    const info = meta[key];
     const m = key.match(/^(.*)\[(\d+)\]$/);
-    const topic = m ? m[1] : key;
-    const partition = m ? Number(m[2]) : 0;
-    if (!groups.has(topic)) groups.set(topic, []);
-    groups.get(topic).push({ key, partition });
+    const heading = info
+      ? { group: info.group, topic: info.topic }
+      : { group: undefined, topic: m ? m[1] : key };
+    const partition = info ? Number(info.partition) : (m ? Number(m[2]) : 0);
+    const id = `${heading.group || ''}\u0000${heading.topic}`;
+    if (!groups.has(id)) groups.set(id, { heading, rows: [] });
+    groups.get(id).rows.push({ key, partition });
   });
-  return [...groups.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([topic, rows]) => ({ topic, rows: rows.sort((a, b) => a.partition - b.partition) }));
+  return [...groups.values()]
+    .sort((a, b) => `${a.heading.group}${a.heading.topic}`.localeCompare(`${b.heading.group}${b.heading.topic}`))
+    .map(({ heading, rows }) => ({ heading, rows: rows.sort((a, b) => a.partition - b.partition) }));
 };
 
-const ConsumerLagHeatmap = ({ data = [], keys = [] }) => {
+const ConsumerLagHeatmap = ({ data = [], keys = [], meta = {} }) => {
   const [tooltip, setTooltip] = useState(null);
   // The tooltip is positioned against the heatmap box, so a cell near either
   // edge would render half outside it and get clipped. Measure the rendered
@@ -74,8 +81,8 @@ const ConsumerLagHeatmap = ({ data = [], keys = [] }) => {
     const columns = data.filter((point) => keys.some((k) => point[k] !== undefined));
     let max = 0;
     columns.forEach((point) => keys.forEach((k) => { max = Math.max(max, point[k] || 0); }));
-    return { groups: parseRows(keys), columns, max: max || 1 };
-  }, [data, keys]);
+    return { groups: parseRows(keys, meta), columns, max: max || 1 };
+  }, [data, keys, meta]);
 
   if (!columns.length) return null;
 
@@ -84,14 +91,25 @@ const ConsumerLagHeatmap = ({ data = [], keys = [] }) => {
 
   return (
     <div data-heatmap style={{ position: 'relative', width: '100%', padding: '4px 30px 0 0' }}>
-      {groups.map(({ topic, rows }) => (
-        <div key={topic} style={{ marginBottom: '14px' }}>
+      {groups.map(({ heading, rows }) => (
+        <div key={`${heading.group || ''}-${heading.topic}`} style={{ marginBottom: '14px' }}>
           <div style={{
             fontFamily: 'var(--font-mono)',
             fontSize: '11px',
             color: 'var(--fg-secondary)',
-            margin: '0 0 6px 0'
-          }}>{topic}</div>
+            margin: '0 0 6px 0',
+            display: 'flex',
+            alignItems: 'baseline',
+            gap: '6px',
+            flexWrap: 'wrap'
+          }}>
+            {heading.group &&
+              <span style={{ color: 'var(--fg-muted)' }}>
+                {heading.group}
+                <span style={{ padding: '0 4px' }}>&rarr;</span>
+              </span>}
+            <span style={{ color: 'var(--fg-primary)' }}>{heading.topic}</span>
+          </div>
           {rows.map(({ key, partition }) => (
             <div key={key} style={{ display: 'flex', alignItems: 'center', marginBottom: '2px' }}>
               <span style={{
@@ -116,7 +134,9 @@ const ConsumerLagHeatmap = ({ data = [], keys = [] }) => {
                           x: cell.left - container.left + cell.width / 2,
                           y: cell.top - container.top,
                           containerWidth: container.width,
-                          text: `${topic}[${partition}] — ${value === undefined ? 'no data' : `${value.toLocaleString()} messages behind (${bandOf(value).name})`} @ ${point.name}`
+                          text: value === undefined
+                            ? `${heading.topic} p${partition} — no data @ ${point.name}`
+                            : `${heading.topic} p${partition} · ${value.toLocaleString()} messages behind (${bandOf(value).name}) @ ${point.name}`
                         });
                       }}
                       onMouseLeave={() => setTooltip(null)}
