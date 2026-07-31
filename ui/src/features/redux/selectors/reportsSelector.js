@@ -116,7 +116,6 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
     const consumerLagGroupsAcc = {};
     const consumerLagPartitionsAcc = {};
     const consumerLagPartitionsMeta = {};
-    // Longest first: one group id can be a prefix of another.
     const knownGroups = [];
 
     const offset = startFromZeroTime ? new Date(report.start_time).getTime() : 0;
@@ -233,7 +232,7 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
             // so match against those to recover group, topic and partition.
             const rest = k.slice('kafka.consumer_lag_partition.'.length);
             const lastDot = rest.lastIndexOf('.');
-            const group = knownGroups.find((g) => rest.indexOf(`${g}.`) === 0);
+            const group = longestGroupMatch(knownGroups, rest);
             const series = `${prefix}${rest.slice(0, lastDot)}[${rest.slice(lastDot + 1)}]`;
             point[series] = summaries[k].max;
             consumerLagPartitionsAcc[series] = true;
@@ -318,7 +317,6 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
     }
     const consumerLagGraphKeys = Object.keys(consumerLagGroupsAcc);
     const consumerLagGraphMax = findMaxY(consumerLagGraph, consumerLagGraphKeys);
-    knownGroups.sort((a, b) => b.length - a.length);
     const consumerLagPartitionsGraphKeys = Object.keys(consumerLagPartitionsAcc).sort();
     const consumerLagPartitionsGraphMax = findMaxY(consumerLagPartitionsGraph, consumerLagPartitionsGraphKeys);
     const latencyGraphMax = findMaxY(latencyGraph, latencyGraphKeys);
@@ -369,6 +367,13 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
       referenceAreas: referenceAreas
     }
   })
+}
+
+// One group id can be a prefix of another, so take the longest match rather than
+// the first one found.
+function longestGroupMatch (groups, rest) {
+  return groups.reduce((best, g) =>
+    (rest.indexOf(`${g}.`) === 0 && (!best || g.length > best.length)) ? g : best, undefined);
 }
 
 function findMaxY (data, keys) {

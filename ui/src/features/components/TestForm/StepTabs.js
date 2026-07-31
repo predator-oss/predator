@@ -22,8 +22,7 @@ const StepTabs = (props) => {
   const isSleep = step.type === 'sleep';
   const isKafka = engine === 'kafka' && !isSleep;
   const tabs = isKafka || isSleep ? [] : httpTabs(step);
-  const [active, setActive] = useState(tabs.length ? tabs[0].id : null);
-  const current = tabs.find((t) => t.id === active) ? active : (tabs[0] && tabs[0].id);
+  const [active, setActive] = useState('headers');
 
   if (isSleep) {
     return <div className={style.pane}><SleepForm {...props} /></div>;
@@ -46,8 +45,8 @@ const StepTabs = (props) => {
             key={tab.id}
             role='tab'
             type='button'
-            aria-selected={current === tab.id}
-            className={`${style.tab} ${current === tab.id ? style.active : ''}`}
+            aria-selected={active === tab.id}
+            className={`${style.tab} ${active === tab.id ? style.active : ''}`}
             onClick={() => setActive(tab.id)}
           >
             {tab.label}
@@ -56,7 +55,7 @@ const StepTabs = (props) => {
         ))}
       </div>
       <div className={style.pane} role='tabpanel'>
-        <StepForm {...props} section={current} index={index} onChangeValue={onChangeValue} />
+        <StepForm {...props} section={active} index={index} onChangeValue={onChangeValue} />
       </div>
     </div>
   );

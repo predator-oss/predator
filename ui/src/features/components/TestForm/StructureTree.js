@@ -12,9 +12,9 @@ const METHOD_CLASS = {
 
 const stepChip = (step, engine) => {
   if (step.type === 'sleep') return { label: 'WAIT', className: style.wait };
-  if (engine === 'kafka') return { label: 'PROD', className: style.produce };
+  if (engine === 'kafka') return { label: 'PRODUCE', className: style.post };
   const method = (step.method || 'GET').toUpperCase();
-  return { label: method.slice(0, 4), className: METHOD_CLASS[method] || style.post };
+  return { label: method, className: METHOD_CLASS[method] || style.post };
 };
 
 const stepLabel = (step, engine) => {
@@ -39,6 +39,7 @@ const Node = ({ selected, indent, chip, label, badges = [], onClick, onDelete })
       <button
         className={style.remove}
         title='Delete'
+        aria-label={`Delete ${label}`}
         onClick={(e) => { e.stopPropagation(); onDelete(); }}
       >×</button>}
   </div>

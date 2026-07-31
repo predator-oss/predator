@@ -23,28 +23,6 @@
   font-size: var(--text-sm);
 }
 
-.addStep {
-  display: flex;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border-top: 1px solid var(--border-subtle);
-  background: var(--bg-sunken);
-}
-
 @media (max-width: 900px) {
   .builder { grid-template-columns: minmax(0, 1fr); }
-}
-
-.addBtn {
-  font-family: var(--font-ui);
-  font-size: var(--text-sm);
-  padding: 5px var(--space-3);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-default);
-  background: var(--bg-surface);
-  color: var(--fg-primary);
-  cursor: pointer;
-
-  &:hover { background: var(--bg-hover); }
-  &:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
 }
