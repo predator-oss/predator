@@ -111,6 +111,7 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
     let totalKafkaSent = 0;
     let totalHttpRequests = 0;
     let totalUnattributed = 0;
+    let prevTimeMills = 0;
     const kafkaTopicsAcc = {};
     const consumerLagGroupsAcc = {};
     const consumerLagPartitionsAcc = {};
@@ -183,7 +184,13 @@ function buildAggregateReportData (reports, withPrefix, startFromZeroTime, lastB
         // that by each protocol's share of the window beats recomputing a window
         // length from bucket labels, which collapse to zero for same-bucket posts.
         const windowOps = kafkaSent + httpRequests + unattributed;
-        const windowRate = (bucket.rps && bucket.rps.mean) || 0;
+        // Reports from runners older than the one that folded kafka sends into rps
+        // carry counters but no rate; the gap between posts recovers it, so those
+        // charts show the traffic that happened instead of a flat zero.
+        const elapsed = prevTimeMills ? (timeMills - prevTimeMills) / 1000 : 0;
+        const windowRate = (bucket.rps && bucket.rps.mean) ||
+          (elapsed > 0 ? windowOps / elapsed : 0);
+        prevTimeMills = timeMills;
         const perSecond = (n) => (windowOps > 0
           ? Math.round((windowRate * n / windowOps) * 100) / 100
           : 0);
