@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.11.3](https://github.com/predator-oss/predator/compare/v1.11.2...v1.11.3) (2026-07-31)
+
+
+### Bug Fixes
+
+* **ui:** throughput spikes and stacked points from sub-bucket stats posts ([#20](https://github.com/predator-oss/predator/issues/20)) ([9771631](https://github.com/predator-oss/predator/commit/977163189f9ea96f7e350c6a96408b5ddba83c80))
+
 ### [1.11.2](https://github.com/predator-oss/predator/compare/v1.11.1...v1.11.2) (2026-07-31)
 
 ### [1.11.1](https://github.com/predator-oss/predator/compare/v1.11.0...v1.11.1) (2026-07-30)
